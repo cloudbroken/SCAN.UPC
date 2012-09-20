@@ -1,0 +1,5 @@
+importFrom(methods, new)
+importFrom(utils, glob2rx, read.table, write.table)
+import(Biobase, oligo, Biostrings)
+importMethodsFrom(Biostrings, width)
+export(SCAN)

@@ -1,0 +1,126 @@
+% -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
+%\VignetteIndexEntry{SCAN - Primer}
+%\VignetteKeywords{Preprocessing, Affymetrix}
+%\VignetteDepends{Biobase, oligo, Biostrings}
+%\VignettePackage{SCAN.UPC}
+\documentclass[12pt]{article}
+\usepackage{hyperref}
+\usepackage[authoryear, round]{natbib}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+
+\textwidth=6.2in
+\textheight=8.5in
+\parskip=.3cm
+\oddsidemargin=.1in
+\evensidemargin=.1in
+\headheight=-.3in
+
+\newcommand\Rpackage[1]{{\textsf{#1}\index{#1 (package)}}}
+\newcommand\dataset[1]{{\textit{#1}\index{#1 (data set)}}}
+\newcommand\Rclass[1]{{\textit{#1}\index{#1 (class)}}}
+\newcommand\Rfunction[1]{{{\small\texttt{#1}}\index{#1 (function)}}}
+\newcommand\Rfunarg[1]{{\small\texttt{#1}}}
+\newcommand\Robject[1]{{\small\texttt{#1}}}
+
+\hypersetup{
+    colorlinks=false,
+    pdfborder={0 0 0},
+}
+
+\author{Stephen R. Piccolo}
+\begin{document}
+\title{Single-Channel Array Normalization (SCAN)}
+\maketitle
+\tableofcontents
+
+<<setup, echo=FALSE>>=
+## do work in temporary directory
+pwd <- setwd(tempdir())
+@ 
+
+\section{Background}
+
+This vignette describes how to normalize samples with the \textit{Single-Channel Array Normalization (SCAN)} method. This new approach has been described in detail in a recent paper \citep{piccolo:genomics}. Individuals interested in understanding the motivations and methodology behind this method can read this paper for extensive details.
+
+Briefly, SCAN is a single-sample approach for gene-expression microarrays. This means that the output for a given microarray sample will be the same whether that sample is processed in isolation or jointly with other samples. The probe-sequence content within each microarray is used to correct for binding-affinity biases that can arise during processing and to standardize variances across the probes. Because samples can be processed individually, the user can process extremely large batches of files with a modest computer-memory footprint. Unlike many normalization methods, SCAN can be applied to any Affymetrix microarray for which an annotation package (that has been constructed using the pdInfoBuilder package) exists in Bioconductor. In the paper mentioned above, we demonstrate that SCAN performs as well as or better than several popular normalization methods on simulated and ``real-world'' data sets.
+
+\section{How to use SCAN}
+
+This section demonstrates how to normalize an Affymetrix microarray file. In the examples below, an example CEL file is downloaded from Gene Expression Omnibus, saved to a temporary file, and then normalized using SCAN. Various optional parameters are also demonstrated.
+
+%This package is designed to interface with the Bioconductor (\url{http://www.bioconductor.org}) open-source software for bioinformatics. Three Bioconductor packages must be installed before SCAN can be executed: Biobase, oligo, Biostrings. These can be installed using the following commands in R:
+
+%\begin{quote}
+%\begin{verbatim}
+%> source("http://bioconductor.org/biocLite.R")
+%> biocLite(c("Biobase", "oligo", "Biostrings"))
+%\end{verbatim}
+%\end{quote}
+
+%Then to install this package, execute the following (specify the location of SCAN-UPC.tar.gz on your system):
+
+%\begin{quote}
+%\begin{verbatim}
+%> install.packages("SCAN.UPC_0.99.0.tar.gz", repos=NULL, type="source")
+%\end{verbatim}
+%\end{quote}
+
+The first step is to download an example CEL file (which was obtained via Gene Expression Omnibus).
+
+<<>>=
+celFilePath = "Vignette_Example.CEL.gz"
+download.file("http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM555237&file=GSM555237.CEL.gz", celFilePath)
+@
+%download.file("http://tinyurl.com/c675lkz", celFilePath)
+
+To normalize the file, the \Rfunction{SCAN} function must be invoked. This function requires one mandatory parameter: a path specifying the location of the file to be normalized.
+
+<<>>=
+library(SCAN.UPC)
+normalized = SCAN(celFilePath)
+@
+
+The \Rfunction{SCAN} function returns an \Rclass{ExpressionSet} object containing a row for each probeset (transcript/gene) value. Detailed status information, including the number of iterations required for mathematical convergence of the mixture models, are printed to the console.
+
+Multiple input files can also be specified using wildcard characters (e.g., ``*.CEL''). In this case, the \Rfunction{SCAN} function returns an \Rclass{ExpressionSet} object with a row for each probeset and a column for each input file.
+
+Using the optional \Rfunarg{outFilePath} parameter, the normalized values also can be saved to a text file. The example below demonstrates this option. (The optional \Rfunarg{verbose} parameter can also be used. When set to FALSE, \Rfunction{SCAN} outputs only minimal status information while processing.)
+
+<<>>=
+normalized = SCAN(celFilePath, outFilePath="output_file.txt")
+@
+
+By default, \Rfunction{SCAN} uses the default mappings between probes and genes that have been provided by the manufacturer. However, these mappings may be outdated or may include problematic probes (for example, those that cross hybridize). The default mappings also may produce multiple summary values per gene. Alternative mappings, such as those provided by the BrainArray resource (see \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/genomic_curated_CDF.asp}), allow \Rfunction{SCAN} to produce a single value per gene and to use updated gene definitions. Users can specify alternative mappings using the \Rfunarg{probeSummaryPackage} parameter. If specified, this package must conform to the standards of the \Rpackage{AnnotationDbi} package. The BrainArray packages can be downloaded from \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/CDF_download.asp}. When using BrainArray, be sure to download the R source package for probe-level mappings (example below).
+
+\includegraphics[width=6 in]{BrainArray.png}
+
+Once such a probe-summary has been downloaded, it must be installed in R using code such as the following.
+
+%download.file("http://tinyurl.com/bpfgw3j", "hgu95ahsentrezgprobe_15.0.0.tar.gz")
+<<download-brainarray, eval=FALSE>>=
+download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", "hgu95ahsentrezgprobe_15.0.0.tar.gz")
+install.packages("hgu95ahsentrezgprobe_15.0.0.tar.gz", repos=NULL, type="source")
+library(hgu95ahsentrezgprobe)
+@
+
+Then the mappings can be applied to a CEL file using code such as the following.
+
+<<scan-brainarray, eval=FALSE>>=
+normalized = SCAN(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
+@
+
+Finally, we clean up files that were created in this demo.
+
+<<>>=
+unlink(c(celFilePath, "output_file.txt", "hgu95ahsentrezgprobe_15.0.0.tar.gz"))
+@
+
+<<cleanup, echo=FALSE>>=
+setwd(pwd)
+@ 
+
+\bibliographystyle{plainnat}
+\bibliography{SCAN.vignette}
+
+\end{document}
