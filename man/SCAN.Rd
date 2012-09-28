@@ -61,14 +61,14 @@ normalized = SCAN(celFilePath)
 # Normalize a CEL file and save output to a file
 normalized = SCAN(celFilePath, "output_file.txt")
 
-if (interactive()) {
-  # Normalize a CEL file and summarize at the gene level using BrainArray
-  # mappings for Entrez Gene
-  probeFilePath = file.path(tempdir(), "hgu95ahsentrezgprobe_15.0.0.tar.gz")
-  download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", probeFilePath)
-  install.packages(probeFilePath, repos=NULL, type="source")
-  library(hgu95ahsentrezgprobe)
-  normalized = SCAN(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
+\dontrun{
+# Normalize a CEL file and summarize at the gene level using BrainArray
+# mappings for Entrez Gene
+probeFilePath = file.path(tempdir(), "hgu95ahsentrezgprobe_15.0.0.tar.gz")
+download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", probeFilePath)
+install.packages(probeFilePath, repos=NULL, type="source")
+library(hgu95ahsentrezgprobe)
+normalized = SCAN(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
 }
 
 }
