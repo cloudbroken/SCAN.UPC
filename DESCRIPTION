@@ -2,7 +2,7 @@ Encoding: UTF-8
 Package: SCAN.UPC
 Type: Package
 Title: Single-channel array normalization (SCAN)
-Version: 0.99.2
+Version: 1.0.0
 Author: Stephen R. Piccolo and W. Evan Johnson
 Maintainer: Stephen R. Piccolo <stephen.piccolo@hsc.utah.edu>
 Description: SCAN is a microarray normalization method to facilitate personalized-medicine workflows. Rather than processing microarray samples as groups, which can introduce biases and present logistical challenges, SCAN normalizes each sample individually by modeling and removing probe- and array-specific background noise using only data from within each array. (The Universal Probability of expression Codes (UPC) method is an extension of SCAN and will be added to this package soon.)
