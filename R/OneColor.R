@@ -25,6 +25,9 @@ processCelFiles = function(celFilePattern, outFilePath=NA, probeSummaryPackage=N
   if (length(celFilePaths) == 0)
     stop("No CEL files that match the pattern ", celFilePattern, " could be located.")
 
+  if (!is.na(outFilePath))
+    createOutputDir(dirPath=dirname(outFilePath), verbose=verbose)
+
   if (!is.na(probeLevelOutDirPath))
     createOutputDir(dirPath=probeLevelOutDirPath, verbose=verbose)
 
@@ -53,7 +56,6 @@ processCelFiles = function(celFilePattern, outFilePath=NA, probeSummaryPackage=N
 
   if (!is.na(outFilePath))
   {
-    createOutputDir(dirPath=dirname(outFilePath), verbose=verbose)
     write.table(round(summarized, 8), outFilePath, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)
     message("Saved output to ", outFilePath, sep="")
   }
