@@ -41,6 +41,9 @@ processCelFiles = function(celFilePattern, outFilePath=NA, probeSummaryPackage=N
 
     celSummarized = processCelFile(celFilePath=celFilePath, probeSummaryPackage=probeSummaryPackage, UPC=UPC, probeLevelOutFilePath=probeLevelOutFilePath, verbose=verbose)
 
+    if (is.null(celSummarized))
+      next
+
     if (is.null(summarized))
     {
       summarized = celSummarized
@@ -53,6 +56,9 @@ processCelFiles = function(celFilePattern, outFilePath=NA, probeSummaryPackage=N
       colnames(summarized) = c(previousColNames, basename(celFilePath))
     }
   }
+
+  if (is.null(summarized))
+    return(ExpressionSet())
 
   if (!is.na(outFilePath))
   {
@@ -112,13 +118,14 @@ processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFi
 
     pint = pm(affyExpressionFS)[which(shouldUseProbes),]
 
-    #set.seed(1)
-    #randomNoise = runif(length(pint)) / 10000000
-    #my = log2(pint) + randomNoise # This avoids a problem where too many identical values results in some bins having no values
+    if ((sum(pint==0) / length(pint)) > 0.01)
+    {
+      message(paste(celFilePath, " has a disproportionate number of zero values, so it cannot be processed.", sep=""))
+      return(NULL)
+    }
+
     my = log2(pint)
-
     nGroups = length(my) / binsize
-
     samplingProbeIndices = getSampleIndices(total=length(pint), verbose=verbose)
 
     mixResult = EM_vMix(y=my[samplingProbeIndices], X=mx[samplingProbeIndices,], nbins=nbins, verbose=verbose, demo=length(grep("Vignette_Example", basename(celFilePath))) > 0)
@@ -188,7 +195,19 @@ getSampleIndices = function(total, verbose=TRUE)
 assign_bin = function(y, nbins, verbose=TRUE)
 {
   quans = sort(y)[floor(length(y) * 1:nbins / nbins)]
-  sapply(y, function(x) { sum(x>quans) }) + 1
+  bins = sapply(y, function(x) { sum(x>quans) }) + 1
+
+  if (length(table(bins)) != nbins)
+  {
+    if (verbose)
+      message("The values were not separated into enough bins, so a tiny amount of noise will be added to make this possible.")
+
+    set.seed(1)
+    noise = rnorm(length(y)) / 10000000
+    bins = assign_bin(y + noise, nbins, verbose)
+  }
+
+  bins
 }
 
 buildDesignMatrix = function(pmSeqs, verbose=TRUE)
