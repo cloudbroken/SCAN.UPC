@@ -67,8 +67,10 @@ if (interactive()) {
   probeFilePath = file.path(tempdir(), "hgu95ahsentrezgprobe_15.0.0.tar.gz")
   download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", probeFilePath)
   install.packages(probeFilePath, repos=NULL, type="source")
+\dontrun{
   library(hgu95ahsentrezgprobe)
   normalized = UPC(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
+}
 }
 
 }
