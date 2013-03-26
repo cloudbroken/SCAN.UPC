@@ -8,6 +8,6 @@ Description: SCAN is a microarray normalization method to facilitate personalize
 License: MIT
 Depends: R (>= 2.14.0), Biobase (>= 2.6.0), oligo, Biostrings
 Suggests: pd.hg.u95a
-Imports: utils, methods
+Imports: utils, methods, MASS, tools
 biocViews: Software, Microarray, Preprocessing, RNAseq, TwoChannel, OneChannel
 URL: http://bioconductor.org, http://jlab.bu.edu/software/scan-upc
