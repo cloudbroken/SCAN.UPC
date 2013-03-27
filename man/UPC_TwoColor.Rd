@@ -1,11 +1,11 @@
-\name{UPC}
-\alias{UPC}
+\name{UPC_TwoColor}
+\alias{UPC_TwoColor}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  Universal Probability of expression Codes (UPC) for single-channel microarrays
+  Universal Probability of expression Codes (UPC) for two-channel microarrays
 }
 \description{
-  This function is used to normalize single-channel expression microarrays via the UPC method. In raw form, such microarray data come in the form of Affymetrix .CEL files.
+  This function is used to normalize two-channel expression microarrays via the UPC method. In raw form, such microarray data come in the form of Affymetrix .CEL files.
 }
 \usage{
 UPC(celFilePattern, outFilePath = NA, probeSummaryPackage = NA,
