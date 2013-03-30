@@ -8,7 +8,7 @@
   This function is used to normalize single-channel expression microarrays via the UPC method. In raw form, such microarray data come in the form of Affymetrix .CEL files.
 }
 \usage{
-UPC(celFilePattern, outFilePath = NA, probeSummaryPackage = NA,
+UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, probeSummaryPackage = NA,
      probeLevelOutDirPath = NA, verbose = TRUE)
 }
 \arguments{
@@ -16,13 +16,16 @@ UPC(celFilePattern, outFilePath = NA, probeSummaryPackage = NA,
      Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.CEL"). This is the only required parameter.
 }
   \item{outFilePath}{
-     Absolute or relative path where the output file will be saved. This is optional.
+     Absolute or relative path where the output file will be saved. This parameter is optional.
+}
+  \item{convThreshold}{
+     Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge, it may be useful to adjust this value. This parameter is optional.
 }
   \item{probeSummaryPackage}{
-     An R package that specifies alternative probe/gene mappings. This is optional. See note below for more details.
+     An R package that specifies alternative probe/gene mappings. This parameter is optional. See note below for more details.
 }
   \item{probeLevelOutDirPath}{
-     Absolute or relative path to a directory where probe-level normalized values can be saved. This is optional. By default, the probe-level values will be discarded after they have been summarized. However, if the user has a need to repeatedly process the same file (perhaps to try various probe/gene mappings), this option can be useful because UPC will retrieve previously normalized values if a probe-level file exists, rather than renormalize the raw data. The user should be aware that probe-level files may consume a considerable amount of disk space.
+     Absolute or relative path to a directory where probe-level normalized values can be saved. This parameter is optional. By default, the probe-level values will be discarded after they have been summarized. However, if the user has a need to repeatedly process the same file (perhaps to try various probe/gene mappings), this option can be useful because UPC will retrieve previously normalized values if a probe-level file exists, rather than renormalize the raw data. The user should be aware that probe-level files may consume a considerable amount of disk space.
 }
   \item{verbose}{
      Whether to output more detailed status information as files are normalized. Default is TRUE.
@@ -61,19 +64,18 @@ normalized = UPC(celFilePath)
 # Normalize a CEL file and save output to a file
 normalized = UPC(celFilePath, "output_file.txt")
 
-if (interactive()) {
-  # Normalize a CEL file and summarize at the gene level using BrainArray
-  # mappings for Entrez Gene
-  probeFilePath = file.path(tempdir(), "hgu95ahsentrezgprobe_15.0.0.tar.gz")
-  download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", probeFilePath)
-  install.packages(probeFilePath, repos=NULL, type="source")
 \dontrun{
-  library(hgu95ahsentrezgprobe)
-  normalized = UPC(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
+# Normalize a CEL file and summarize at the gene level using BrainArray
+# mappings for Entrez Gene
+probeFilePath = file.path(tempdir(), "hgu95ahsentrezgprobe_15.0.0.tar.gz")
+download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", probeFilePath)
+install.packages(probeFilePath, repos=NULL, type="source")
+
+library(hgu95ahsentrezgprobe)
+normalized = UPC(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
 }
 }
 
-}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 %\keyword{ ~kwd1 }

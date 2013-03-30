@@ -10,7 +10,7 @@
 
 source("R/UPC_Models.R")
 
-UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelType="nn", conv=0.001, verbose=TRUE)
+UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelType="nn", convThreshold=0.001, verbose=TRUE)
 {
   require(tools)
   annotationType = file_ext(annotationFilePath)
@@ -86,7 +86,7 @@ UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelTy
       }
     }
 
-    upc = round(UPC_Transform(counts, lengths=lengths, gcContent=gc, modelType=modelType, conv=conv), 6)
+    upc = round(UPC_Transform(counts, lengths=lengths, gcContent=gc, modelType=modelType, conv=convThreshold), 6)
 
     outSampleData = cbind(data[,1], upc)
 

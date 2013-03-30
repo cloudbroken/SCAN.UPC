@@ -5,34 +5,33 @@
   Universal Probability of expression Codes (UPC) for two-channel microarrays
 }
 \description{
-  This function is used to normalize two-channel expression microarrays via the UPC method. In raw form, such microarray data come in the form of Affymetrix .CEL files.
+  This function is used to normalize two-channel expression microarrays (from Agilent) using the Universal Probability of expression Codes (UPC) approach. In raw form, such microarray data come in the form of tab-separate data files.
 }
 \usage{
-UPC(celFilePattern, outFilePath = NA, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, verbose = TRUE)
+UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01, verbose = TRUE)
 }
 \arguments{
-  \item{celFilePattern}{
-     Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.CEL"). This is the only required parameter.
+  \item{inFilePattern}{
+     Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.txt"). (This is the only required parameter.)
 }
   \item{outFilePath}{
-     Absolute or relative path where the output file will be saved. This is optional.
+     Absolute or relative path where the output file will be saved. (This parameter is optional.)
 }
-  \item{probeSummaryPackage}{
-     An R package that specifies alternative probe/gene mappings. This is optional. See note below for more details.
+  \item{modelType}{
+     Various models can be used for the mixture model to differentiate between active and inactive probes. The default is the normal-normal model (``nn''), which uses the normal distribution. Other available options are log-normal (``ln'') and negative-binomial (``nb'').
 }
-  \item{probeLevelOutDirPath}{
-     Absolute or relative path to a directory where probe-level normalized values can be saved. This is optional. By default, the probe-level values will be discarded after they have been summarized. However, if the user has a need to repeatedly process the same file (perhaps to try various probe/gene mappings), this option can be useful because UPC will retrieve previously normalized values if a probe-level file exists, rather than renormalize the raw data. The user should be aware that probe-level files may consume a considerable amount of disk space.
+  \item{convThreshold}{
+     Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge, it may be useful to adjust this value. (This parameter is optional.)
 }
   \item{verbose}{
-     Whether to output more detailed status information as files are normalized. Default is TRUE.
+     Whether to output more detailed status information as files are processed. Default is TRUE.
 }
 }
 %\details{
 %  ~~ If necessary, more details than the description above ~~
 %}
 \value{
-  An \code{ExpressionSet} object that contains a row for each probeset/gene/transcript and a column for each input file.
+  A list is returned, containing two elements: a matrix containing UPC values and a vector of probe names that correspond to each row of the matrix. The matrix will contain two columns---one corresponding to each channel---for each sample. When the array design uses duplicate probe names (this is common for control probes), the vector of probe names will also contain duplicates.
 }
 \references{
   Piccolo SR, Sun Y, Campbell JD, Lenburg ME, Bild AH, and Johnson WE. A single-sample microarray normalization method to facilitate personalized-medicine workflows. \emph{Genomics}, 2012, 100:6, pp. 337-344.
@@ -51,29 +50,16 @@ By default, \code{UPC} uses the default mappings between probes and genes that h
 %}
 
 \examples{
-# Download an example CEL file and save it as a temporary local file
-celFilePath = file.path(tempdir(), "Vignette_Example.CEL.gz")
-download.file("http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM555237&file=GSM555237.CEL.gz", celFilePath)
-
-# Normalize a CEL file
-normalized = UPC(celFilePath)
-
-# Normalize a CEL file and save output to a file
-normalized = UPC(celFilePath, "output_file.txt")
-
-if (interactive()) {
-  # Normalize a CEL file and summarize at the gene level using BrainArray
-  # mappings for Entrez Gene
-  probeFilePath = file.path(tempdir(), "hgu95ahsentrezgprobe_15.0.0.tar.gz")
-  download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", probeFilePath)
-  install.packages(probeFilePath, repos=NULL, type="source")
 \dontrun{
-  library(hgu95ahsentrezgprobe)
-  normalized = UPC(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
+# Download an example file and save it as a temporary local file
+inFilePath = file.path(tempdir(), "Vignette_Example.txt.gz")
+download.file("http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM1072833&file=GSM1072833%5F252747810638%5F020510%5FS01%5FCGH%5F105%5FDec08%5F1%5F2%2Etxt%2Egz", inFilePath)
+
+# Normalize the file and save output to a file
+result = UPC_TwoColor(inFilePath, "output_file.txt")
 }
 }
 
-}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 %\keyword{ ~kwd1 }

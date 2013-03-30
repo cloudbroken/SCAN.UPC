@@ -8,18 +8,21 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-SCAN = function(celFilePattern, outFilePath=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, verbose=TRUE)
+SCAN = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, verbose=verbose))
+  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, verbose=verbose))
 }
 
-UPC = function(celFilePattern, outFilePath=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, verbose=TRUE)
+UPC = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, verbose=verbose))
+  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, verbose=verbose))
 }
 
-processCelFiles = function(celFilePattern, outFilePath=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, verbose=TRUE)
+processCelFiles = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, verbose=TRUE)
 {
+  if (convThreshold >= 1)
+    stop("The convThreshold value must be lower than 1.0.")
+
   celFilePaths = list.files(path=dirname(celFilePattern), pattern=glob2rx(basename(celFilePattern)), full.names=TRUE)
 
   if (length(celFilePaths) == 0)
@@ -39,7 +42,7 @@ processCelFiles = function(celFilePattern, outFilePath=NA, probeSummaryPackage=N
     if (!is.na(probeLevelOutDirPath))
       probeLevelOutFilePath = paste(probeLevelOutDirPath, "/", basename(celFilePath), ".txt", sep="")
 
-    celSummarized = processCelFile(celFilePath=celFilePath, probeSummaryPackage=probeSummaryPackage, UPC=UPC, probeLevelOutFilePath=probeLevelOutFilePath, verbose=verbose)
+    celSummarized = processCelFile(celFilePath=celFilePath, probeSummaryPackage=probeSummaryPackage, UPC=UPC, convThreshold=convThreshold, probeLevelOutFilePath=probeLevelOutFilePath, verbose=verbose)
 
     if (is.null(celSummarized))
       next
@@ -78,7 +81,7 @@ createOutputDir = function(dirPath, verbose=TRUE)
   }
 }
 
-processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFilePath, nbins=25, binsize=5000, verbose=TRUE)
+processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFilePath, nbins=25, binsize=5000, convThreshold=0.01, verbose=TRUE)
 {
   affyExpressionFS <- read.celfiles(celFilePath)
 
@@ -128,7 +131,7 @@ processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFi
     nGroups = length(my) / binsize
     samplingProbeIndices = getSampleIndices(total=length(pint), verbose=verbose)
 
-    mixResult = EM_vMix(y=my[samplingProbeIndices], X=mx[samplingProbeIndices,], nbins=nbins, verbose=verbose, demo=length(grep("Vignette_Example", basename(celFilePath))) > 0)
+    mixResult = EM_vMix(y=my[samplingProbeIndices], X=mx[samplingProbeIndices,], nbins=nbins, convThreshold=convThreshold, verbose=verbose, demo=length(grep("Vignette_Example", basename(celFilePath))) > 0)
 
     m1 = mx %*% mixResult$b1
     m2 = mx %*% mixResult$b2

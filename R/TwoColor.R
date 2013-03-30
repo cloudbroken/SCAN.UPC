@@ -21,9 +21,9 @@ SCAN_TwoColor = function(inFilePattern, outFilePath=NA, verbose=TRUE)
   ProcessTwoColor(inFilePattern, outFilePath=outFilePath, verbose=verbose)
 }
 
-UPC_TwoColor = function(inFilePattern, outFilePath=NA, modelType="nn", conv=0.01, verbose=TRUE)
+UPC_TwoColor = function(inFilePattern, outFilePath=NA, modelType="nn", convThreshold=0.01, verbose=TRUE)
 {
-  ProcessTwoColor(inFilePattern, outFilePath=outFilePath, upcModelType=modelType, upcConv=conv, verbose=verbose)
+  ProcessTwoColor(inFilePattern, outFilePath=outFilePath, upcModelType=modelType, upcConv=convThreshold, verbose=verbose)
 }
 
 ProcessTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcConv=0.01, verbose=TRUE)
