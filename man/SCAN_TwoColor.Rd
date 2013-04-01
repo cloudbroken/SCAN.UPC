@@ -1,6 +1,5 @@
 \name{SCAN_TwoColor}
 \alias{SCAN_TwoColor}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
   Single-Channel Array Normalization (SCAN) for two-channel Agilent microarrays
 }
@@ -19,6 +18,7 @@ SCAN_TwoColor(inFilePattern, outFilePath = NA, verbose = TRUE)
 }
   \item{verbose}{
      Whether to output more detailed status information as files are normalized. Default is TRUE.
+}
 }
 %\details{
 %  ~~ If necessary, more details than the description above ~~

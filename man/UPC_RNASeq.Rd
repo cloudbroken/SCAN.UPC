@@ -5,7 +5,7 @@
   Universal Probability of expression Codes (UPC) for RNA-Seq data
 }
 \description{
-  This function is used to normalize RNA-Sequencing data via the UPC method. A necessary preliminary step is to generate read counts for each gene (or transcript or exon). A popular approach for accomplishing this is to use the Tophat short-read aligner (http://tophat.cbcb.umd.edu/), followed by application of the htseq-count tool (http://www-huber.embl.de/users/anders/HTSeq/).
+This function is used to normalize RNA-Sequencing data via the UPC method. A necessary preliminary step is to generate read counts for each gene (or transcript or exon). A popular approach for accomplishing this is to use the Tophat short-read aligner (http://tophat.cbcb.umd.edu/), followed by application of the htseq-count tool (http://www-huber.embl.de/users/anders/HTSeq/).
 
 Gene (or transcript or exon) values can be converted to UPCs using this function. The tab-separated data file should contain a row for each gene. The first column should contain the gene ID. The second column should contain the read counts (not RPKM/FPKM values). For example:
 
