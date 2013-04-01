@@ -204,7 +204,6 @@ RS_BC=function(y,l=NULL,gc=NULL,start=NULL,conv){
 }
 
 UPC_nb = function(y, l=NULL, gc=NULL, start=NULL, conv=0.001, sam=10000){
-  library(MASS)
 
   x = cbind(matrix(rep(1,length(y)),ncol=1),l,l^2,gc,gc^2)
   y1=round(y)
