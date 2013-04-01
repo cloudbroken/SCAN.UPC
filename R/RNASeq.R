@@ -10,7 +10,7 @@
 
 source("R/UPC_Models.R")
 
-UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelType="nn", convThreshold=0.001, verbose=TRUE)
+UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelType="nn", convThreshold=0.01, verbose=TRUE)
 {
   require(tools)
   annotationType = file_ext(annotationFilePath)

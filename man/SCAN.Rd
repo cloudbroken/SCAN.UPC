@@ -8,7 +8,7 @@
   This function is used to normalize single-channel expression microarrays via the SCAN method. In raw form, such microarray data come in the form of Affymetrix .CEL files.
 }
 \usage{
-SCAN(celFilePattern, outFilePath = NA, probeSummaryPackage = NA,
+SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, probeSummaryPackage = NA,
      probeLevelOutDirPath = NA, verbose = TRUE)
 }
 \arguments{
@@ -17,6 +17,9 @@ SCAN(celFilePattern, outFilePath = NA, probeSummaryPackage = NA,
 }
   \item{outFilePath}{
      Absolute or relative path where the output file will be saved. This is optional.
+}
+  \item{convThreshold}{
+     Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge, it may be useful to adjust this value. (This parameter is optional.)
 }
   \item{probeSummaryPackage}{
      An R package that specifies alternative probe/gene mappings. This is optional. See note below for more details.
