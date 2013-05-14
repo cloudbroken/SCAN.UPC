@@ -9,7 +9,7 @@
 }
 \usage{
 UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, verbose = TRUE)
+     probeLevelOutDirPath = NA, exonArrayTarget = NA, verbose = TRUE)
 }
 \arguments{
   \item{celFilePattern}{
@@ -26,6 +26,9 @@ UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, probeSummaryPackage 
 }
   \item{probeLevelOutDirPath}{
      Absolute or relative path to a directory where probe-level normalized values can be saved. This parameter is optional. By default, the probe-level values will be discarded after they have been summarized. However, if the user has a need to repeatedly process the same file (perhaps to try various probe/gene mappings), this option can be useful because UPC will retrieve previously normalized values if a probe-level file exists, rather than renormalize the raw data. The user should be aware that probe-level files may consume a considerable amount of disk space.
+}
+  \item{exonArrayTarget}{
+     The type of probes to be used. This parameter is optional and should only be specified when Affymetrix Exon 1.0 ST arrays are being processed. This parameter allows the user to specify the subset of probes that should be used and how the probes should be grouped. Available options are NA, "core", "extended", "full", or "probeset". When "probeset" is used, all probes will be used, and the probes will be grouped according to the Affymetrix probeset definitions. When "core", "extended", or "full" are used, the probes that Affymetrix has defined to fall within each classification will be used, and probes will be grouped by Entrez Gene IDs (as defined in the corresponding annotation package). It is recommended to specify "probeset" when the \emph{probeSummaryPackage} parameter is being used so that all probes will be considered.
 }
   \item{verbose}{
      Whether to output more detailed status information as files are normalized. Default is TRUE.
