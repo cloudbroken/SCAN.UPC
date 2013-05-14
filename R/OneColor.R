@@ -8,17 +8,17 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-SCAN = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, verbose=TRUE)
+SCAN = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, verbose=verbose))
+  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))
 }
 
-UPC = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, verbose=TRUE)
+UPC = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, verbose=verbose))
+  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, exonArrayTarget=exonArrayTarget, verbose=verbose))
 }
 
-processCelFiles = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, verbose=TRUE)
+processCelFiles = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, exonArrayTarget=NA, verbose=TRUE)
 {
   if (convThreshold >= 1)
     stop("The convThreshold value must be lower than 1.0.")
@@ -42,7 +42,7 @@ processCelFiles = function(celFilePattern, outFilePath=NA, convThreshold=0.01, p
     if (!is.na(probeLevelOutDirPath))
       probeLevelOutFilePath = paste(probeLevelOutDirPath, "/", basename(celFilePath), ".txt", sep="")
 
-    celSummarized = processCelFile(celFilePath=celFilePath, probeSummaryPackage=probeSummaryPackage, UPC=UPC, convThreshold=convThreshold, probeLevelOutFilePath=probeLevelOutFilePath, verbose=verbose)
+    celSummarized = processCelFile(celFilePath=celFilePath, probeSummaryPackage=probeSummaryPackage, UPC=UPC, convThreshold=convThreshold, probeLevelOutFilePath=probeLevelOutFilePath, exonArrayTarget=exonArrayTarget, verbose=verbose)
 
     if (is.null(celSummarized))
       next
@@ -81,11 +81,16 @@ createOutputDir = function(dirPath, verbose=TRUE)
   }
 }
 
-processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFilePath, nbins=25, binsize=5000, convThreshold=0.01, verbose=TRUE)
+processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFilePath, exonArrayTarget, nbins=25, binsize=5000, convThreshold=0.01, verbose=TRUE)
 {
   affyExpressionFS <- read.celfiles(celFilePath)
 
-  pmSeq = pmSequence(affyExpressionFS)
+  if (is.na(exonArrayTarget))
+  {
+    pmSeq = pmSequence(affyExpressionFS)
+  } else {
+    pmSeq = pmSequence(affyExpressionFS, target=exonArrayTarget)
+  }
 
   shouldUseProbes = width(pmSeq)==25
 
@@ -119,7 +124,12 @@ processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFi
       mxStartIndex = mxStartIndex + nrow(mxChunk)
     }
 
-    pint = pm(affyExpressionFS)[which(shouldUseProbes),]
+    if (is.na(exonArrayTarget))
+    {
+      pint = pm(affyExpressionFS)[which(shouldUseProbes),]
+    } else {
+      pint = pm(affyExpressionFS, target=exonArrayTarget)[which(shouldUseProbes),]
+    }
 
     if ((sum(pint==0) / length(pint)) > 0.01)
     {
@@ -147,7 +157,6 @@ processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFi
 
     bin = assign_bin(y=m1, nbins=nbins, verbose=verbose)
     gam = vresp(y=my, X=mx, bin=bin, p=mixResult$p, b1=mixResult$b1, s1=mixResult$s1, b2=mixResult$b2, s2=mixResult$s2, verbose=verbose)[,2]
-    xyCoord = paste(getX(affyExpressionFS, type="pm")[which(shouldUseProbes)], getY(affyExpressionFS, type="pm")[which(shouldUseProbes)], sep="_")
 
     y_norm = round(y_norm, 8)
     gam = round(gam, 8)
@@ -170,6 +179,7 @@ processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFi
     probeSummaryData = matrix(probeSetNames, ncol=1)
     rownames(probeSummaryData) = probeSummaryXyCoord
 
+    xyCoord = paste(getX(affyExpressionFS, type="pm")[which(shouldUseProbes)], getY(affyExpressionFS, type="pm")[which(shouldUseProbes)], sep="_")
     dataProbeIndices = which(xyCoord %in% probeSummaryXyCoord)
     keepXyCoord = xyCoord[dataProbeIndices]
 
@@ -177,7 +187,13 @@ processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFi
   } else
   {
     dataProbeIndices = 1:length(y_norm)
-    probeNames = probeNames(affyExpressionFS)[which(shouldUseProbes)]
+
+    if (is.na(exonArrayTarget))
+    {
+      probeNames = probeNames(affyExpressionFS)[which(shouldUseProbes)]
+    } else {
+      probeNames = probeNames(affyExpressionFS, target=exonArrayTarget)[which(shouldUseProbes)]
+    }
   }
 
   if (UPC)

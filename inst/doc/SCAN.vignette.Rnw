@@ -70,9 +70,8 @@ The first step is to download an example CEL file (which was obtained via Gene E
 
 <<>>=
 celFilePath = "Vignette_Example.CEL.gz"
-download.file("http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM555237&file=GSM555237.CEL.gz", celFilePath)
+download.file("http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM555237&format=file&file=GSM555237%2ECEL%2Egz", celFilePath)
 @
-%download.file("http://tinyurl.com/c675lkz", celFilePath)
 
 To normalize the file, the \Rfunction{SCAN} function must be invoked. This function requires one mandatory parameter: a path specifying the location of the file to be normalized.
 
@@ -97,7 +96,6 @@ By default, \Rfunction{SCAN} uses the default mappings between probes and genes 
 
 Once such a probe-summary has been downloaded, it must be installed in R using code such as the following.
 
-%download.file("http://tinyurl.com/bpfgw3j", "hgu95ahsentrezgprobe_15.0.0.tar.gz")
 <<download-brainarray, eval=FALSE>>=
 download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", "hgu95ahsentrezgprobe_15.0.0.tar.gz")
 install.packages("hgu95ahsentrezgprobe_15.0.0.tar.gz", repos=NULL, type="source")

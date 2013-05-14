@@ -56,7 +56,7 @@ By default, \code{SCAN} uses the default mappings between probes and genes that 
 \examples{
 # Download an example CEL file and save it as a temporary local file
 celFilePath = file.path(tempdir(), "Vignette_Example.CEL.gz")
-download.file("http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM555237&file=GSM555237.CEL.gz", celFilePath)
+download.file("http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM555237&format=file&file=GSM555237%2ECEL%2Egz", celFilePath)
 
 # Normalize a CEL file
 normalized = SCAN(celFilePath)
