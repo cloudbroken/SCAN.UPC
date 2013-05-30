@@ -13,16 +13,19 @@ UPC_Transform = function(x, lengths=NULL, gcContent=NULL, modelType="nn", conv=0
   if (!(modelType%in%c("nn", "ln", "nb")))
     stop(paste("The specified modelType value (", modelType, ") is invalid. Must be nn, ln, or nb.", sep=""))
 
+  if (!is.null(lengths))
+    lengths = log2(lengths)
+
   if (modelType == "nn")
   {
     message("Calculating UPC values using the normal-normal model.")
-    upcs = UPC_nn(log2(x+2), l=log2(lengths), gc=gcContent, conv=conv)
+    upcs = UPC_nn(log2(x+2), l=lengths, gc=gcContent, conv=conv)
   }
 
   if (modelType == "ln")
   {
     message("Calculating UPC values using the log-normal model.")
-    upcs = UPC_ln(log2(x+2), l=log2(lengths), gc=gcContent, conv=conv)
+    upcs = UPC_ln(log2(x+2), l=lengths, gc=gcContent, conv=conv)
   }
 
   if (modelType == "nb")
@@ -31,13 +34,13 @@ UPC_Transform = function(x, lengths=NULL, gcContent=NULL, modelType="nn", conv=0
 
     tryNegBinom = function()
     {
-      return(UPC_nb(log2(x + 2), l=log2(lengths), gc=gcContent, conv=conv))
+      return(UPC_nb(log2(x + 2), l=lengths, gc=gcContent, conv=conv))
     }
     retryNegBinom = function(e)
     {
       message(e)
       message("\nRetrying...")
-      return(UPC_nb(log2(x+2), l=log2(lengths), gc=gcContent, conv=conv))
+      return(UPC_nb(log2(x+2), l=lengths, gc=gcContent, conv=conv))
     }
   
     upcs = tryCatch(tryNegBinom(), error=retryNegBinom)

@@ -21,6 +21,10 @@ UPC_TwoColor = function(inFilePattern, outFilePath=NA, modelType="nn", convThres
 ProcessTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcConv=0.01, verbose=TRUE)
 {
   inFilePaths = list.files(path=dirname(inFilePattern), pattern=glob2rx(basename(inFilePattern)), full.names=TRUE)
+
+  if (length(inFilePaths) == 0)
+    stop("No input files matched the pattern: ", inFilePattern)
+
   outData = NULL
 
   for (inFilePath in inFilePaths)
