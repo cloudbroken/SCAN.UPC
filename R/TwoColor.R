@@ -20,6 +20,9 @@ UPC_TwoColor = function(inFilePattern, outFilePath=NA, modelType="nn", convThres
 
 ProcessTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcConv=0.01, verbose=TRUE)
 {
+  if (shouldDownloadFromGEO(inFilePattern))
+    inFilePattern = downloadFromGEO(inFilePattern)
+
   inFilePaths = list.files(path=dirname(inFilePattern), pattern=glob2rx(basename(inFilePattern)), full.names=TRUE)
 
   if (length(inFilePaths) == 0)

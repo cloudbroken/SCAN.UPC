@@ -1,6 +1,6 @@
 importFrom(methods, new)
 importFrom(utils, glob2rx, read.table, write.table)
-import(Biobase, oligo, Biostrings)
+import(Biobase, oligo, Biostrings, GEOquery)
 import(MASS, tools)
 importMethodsFrom(Biostrings, width)
 export(SCAN)

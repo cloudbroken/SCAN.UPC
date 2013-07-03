@@ -8,20 +8,23 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-SCAN = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
+SCAN = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))
 }
 
-UPC = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
+UPC = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, exonArrayTarget=exonArrayTarget, verbose=verbose))
 }
 
-processCelFiles = function(celFilePattern, outFilePath=NA, convThreshold=0.01, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, exonArrayTarget=NA, verbose=TRUE)
+processCelFiles = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, exonArrayTarget=NA, verbose=TRUE)
 {
   if (convThreshold >= 1)
     stop("The convThreshold value must be lower than 1.0.")
+
+  if (shouldDownloadFromGEO(celFilePattern))
+    celFilePattern = downloadFromGEO(celFilePattern)
 
   celFilePaths = list.files(path=dirname(celFilePattern), pattern=glob2rx(basename(celFilePattern)), full.names=TRUE)
 
@@ -42,7 +45,7 @@ processCelFiles = function(celFilePattern, outFilePath=NA, convThreshold=0.01, p
     if (!is.na(probeLevelOutDirPath))
       probeLevelOutFilePath = paste(probeLevelOutDirPath, "/", basename(celFilePath), ".txt", sep="")
 
-    celSummarized = processCelFile(celFilePath=celFilePath, probeSummaryPackage=probeSummaryPackage, UPC=UPC, convThreshold=convThreshold, probeLevelOutFilePath=probeLevelOutFilePath, exonArrayTarget=exonArrayTarget, verbose=verbose)
+    celSummarized = processCelFile(celFilePath=celFilePath, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, UPC=UPC, convThreshold=convThreshold, probeLevelOutFilePath=probeLevelOutFilePath, exonArrayTarget=exonArrayTarget, verbose=verbose)
 
     if (is.null(celSummarized))
       next
@@ -81,9 +84,14 @@ createOutputDir = function(dirPath, verbose=TRUE)
   }
 }
 
-processCelFile = function(celFilePath, probeSummaryPackage, UPC, probeLevelOutFilePath, exonArrayTarget, nbins=25, binsize=5000, convThreshold=0.01, verbose=TRUE)
+processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackage, UPC, probeLevelOutFilePath, exonArrayTarget, nbins=25, binsize=5000, convThreshold=0.01, verbose=TRUE)
 {
-  affyExpressionFS <- read.celfiles(celFilePath)
+  if (is.na(annotationPackageName))
+  {
+    affyExpressionFS <- read.celfiles(celFilePath)
+  } else {
+    affyExpressionFS <- read.celfiles(celFilePath, pkgname=annotationPackageName)
+  }
 
   if (is.na(exonArrayTarget))
   {

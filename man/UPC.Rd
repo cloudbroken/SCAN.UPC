@@ -8,7 +8,7 @@
   This function is used to normalize single-channel expression microarrays via the UPC method. In raw form, such microarray data come in the form of Affymetrix .CEL files.
 }
 \usage{
-UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, probeSummaryPackage = NA,
+UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA, probeSummaryPackage = NA,
      probeLevelOutDirPath = NA, exonArrayTarget = NA, verbose = TRUE)
 }
 \arguments{
@@ -20,6 +20,9 @@ UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, probeSummaryPackage 
 }
   \item{convThreshold}{
      Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge, it may be useful to adjust this value. This parameter is optional.
+}
+  \item{annotationPackageName}{
+     The name of an annotation package that specifies the layout and sequences of the probes. This is optional. By default, the correct annotation package should be identified in most cases. However, with this option allows the user to specify the package explicitly if needed.
 }
   \item{probeSummaryPackage}{
      An R package that specifies alternative probe/gene mappings. This parameter is optional. See note below for more details.
