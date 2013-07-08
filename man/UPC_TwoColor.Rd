@@ -12,7 +12,7 @@ UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01
 }
 \arguments{
   \item{inFilePattern}{
-     Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.txt"). (This is the only required parameter.)
+     Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.txt"). Alternatively, a Gene Expression Omnibus identifier (e.g., GSE39655 or GSM1072833) can be specified.(This is the only required parameter.)
 }
   \item{outFilePath}{
      Absolute or relative path where the output file will be saved. (This parameter is optional.)
@@ -40,7 +40,7 @@ UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01
   Stephen R. Piccolo
 }
 \note{
-By default, \code{UPC} uses the default mappings between probes and genes that have been provided by the manufacturer. However, these mappings may be outdated or may include problematic probes (for example, those that cross hybridize). The default mappings also may produce multiple summary values per gene. Alternative mappings, such as those provided by the BrainArray resource (see \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/genomic_curated_CDF.asp}), allow \code{UPC} to produce a single value per gene and to use updated gene definitions. Users can specify alternative mappings using the \code{probeSummaryPackage} parameter. If specified, this package must conform to the standards of the \code{AnnotationDbi} package. The BrainArray packages can be downloaded from \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/CDF_download.asp}. When using BrainArray, be sure to download the R source package for probe-level mappings (see vignette for more information).
+  If a Gene Expression Omnibus (GEO) identifier is specified for the \code{inFilePattern} parameter, an attempt will be made to download the sample(s) directly from GEO. If a study identifier (e.g., GSE39655) is specified, all CEL files from that study will be downloaded. If a sample identifier (e.g., GSM1072833) is specified, only that sample will be downloaded.
 }
 
 % ~Make other sections like Warning with \section{Warning }{....} ~
@@ -52,11 +52,15 @@ By default, \code{UPC} uses the default mappings between probes and genes that h
 \examples{
 \dontrun{
 # Download an example file and save it as a temporary local file
-inFilePath = file.path(tempdir(), "Vignette_Example.txt.gz")
-download.file("http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM1072833&file=GSM1072833%5F252747810638%5F020510%5FS01%5FCGH%5F105%5FDec08%5F1%5F2%2Etxt%2Egz", inFilePath)
+tmpDir = tempdir()
+getGEOSuppFiles("GSM1072833", makeDirectory=FALSE, baseDir=tmpDir)
+inFilePath = file.path(tmpDir, "GSM1072833.CEL.gz")
 
 # Normalize the file and save output to a file
 result = UPC_TwoColor(inFilePath, "output_file.txt")
+
+# Download a file directly from GEO and normalize it in one step
+result = UPC_TwoColor("GSM1072833")
 }
 }
 

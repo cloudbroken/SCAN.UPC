@@ -13,7 +13,7 @@ SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageNa
 }
 \arguments{
   \item{celFilePattern}{
-     Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.CEL"). This is the only required parameter.
+     Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.CEL"). Alternatively, a Gene Expression Omnibus identifier (e.g., GSE22309 or GSM555237) can be specified. This is the only required parameter.
 }
   \item{outFilePath}{
      Absolute or relative path where the output file will be saved. This is optional.
@@ -50,6 +50,8 @@ SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageNa
   Stephen R. Piccolo
 }
 \note{
+If a Gene Expression Omnibus (GEO) identifier is specified for the \code{celFilePattern} parameter, an attempt will be made to download the sample(s) directly from GEO. If a study identifier (e.g., GSE22309) is specified, all CEL files from that study will be downloaded. If a sample identifier (e.g., GSM555237) is specified, only that sample will be downloaded.
+
 By default, \code{SCAN} uses the default mappings between probes and genes that have been provided by the manufacturer. However, these mappings may be outdated or may include problematic probes (for example, those that cross hybridize). The default mappings also may produce multiple summary values per gene. Alternative mappings, such as those provided by the BrainArray resource (see \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/genomic_curated_CDF.asp}), allow \code{SCAN} to produce a single value per gene and to use updated gene definitions. Users can specify alternative mappings using the \code{probeSummaryPackage} parameter. If specified, this package must conform to the standards of the \code{AnnotationDbi} package. The BrainArray packages can be downloaded from \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/CDF_download.asp}. When using BrainArray, be sure to download the R source package for probe-level mappings (see vignette for more information).
 }
 
@@ -61,8 +63,9 @@ By default, \code{SCAN} uses the default mappings between probes and genes that 
 
 \examples{
 # Download an example CEL file and save it as a temporary local file
-celFilePath = file.path(tempdir(), "Vignette_Example.CEL.gz")
-download.file("http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM555237&format=file&file=GSM555237.CEL.gz", celFilePath)
+tmpDir = tempdir()
+getGEOSuppFiles("GSM555237", makeDirectory=FALSE, baseDir=tmpDir)
+celFilePath = file.path(tmpDir, "GSM555237.CEL.gz")
 
 # Normalize a CEL file
 normalized = SCAN(celFilePath)
@@ -74,10 +77,13 @@ normalized = SCAN(celFilePath, "output_file.txt")
 # Normalize a CEL file and summarize at the gene level using BrainArray
 # mappings for Entrez Gene
 probeFilePath = file.path(tempdir(), "hgu95ahsentrezgprobe_15.0.0.tar.gz")
-download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", probeFilePath)
+download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/ 15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", probeFilePath)
 install.packages(probeFilePath, repos=NULL, type="source")
 library(hgu95ahsentrezgprobe)
 normalized = SCAN(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
+
+# Download a CEL file directly from GEO and normalize it in one step
+normalized = SCAN("GSM555237")
 }
 
 }

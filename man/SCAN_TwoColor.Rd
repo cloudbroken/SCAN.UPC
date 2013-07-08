@@ -11,7 +11,7 @@ SCAN_TwoColor(inFilePattern, outFilePath = NA, verbose = TRUE)
 }
 \arguments{
   \item{inFilePattern}{
-     Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.txt"). This is the only required parameter.
+     Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.txt"). Alternatively, a Gene Expression Omnibus identifier (e.g., GSE39655 or GSM1072833) can be specified. This is the only required parameter.
 }
   \item{outFilePath}{
      Absolute or relative path where the output file will be saved. This is optional.
@@ -32,9 +32,9 @@ SCAN_TwoColor(inFilePattern, outFilePath = NA, verbose = TRUE)
 \author{
   Stephen R. Piccolo
 }
-%\note{
-%  In most cases, individual probes are designed to target a specific genomic region that belongs within a particular gene.
-%}
+\note{
+  If a Gene Expression Omnibus (GEO) identifier is specified for the \code{inFilePattern} parameter, an attempt will be made to download the sample(s) directly from GEO. If a study identifier (e.g., GSE39655) is specified, all CEL files from that study will be downloaded. If a sample identifier (e.g., GSM1072833) is specified, only that sample will be downloaded.
+}
 
 % ~Make other sections like Warning with \section{Warning }{....} ~
 
@@ -45,11 +45,15 @@ SCAN_TwoColor(inFilePattern, outFilePath = NA, verbose = TRUE)
 \examples{
 \dontrun{
 # Download an example file and save it as a temporary local file
-inFilePath = file.path(tempdir(), "Vignette_Example.txt.gz")
-download.file("http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM1072833&file=GSM1072833%5F252747810638%5F020510%5FS01%5FCGH%5F105%5FDec08%5F1%5F2%2Etxt%2Egz", inFilePath)
+tmpDir = tempdir()
+getGEOSuppFiles("GSM1072833", makeDirectory=FALSE, baseDir=tmpDir)
+inFilePath = file.path(tmpDir, "GSM1072833.CEL.gz")
 
 # Normalize the file and save output to a file
 result = SCAN_TwoColor(inFilePath, "output_file.txt")
+
+# Download a file directly from GEO and normalize it in one step
+result = SCAN_TwoColor("GSM1072833")
 }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
