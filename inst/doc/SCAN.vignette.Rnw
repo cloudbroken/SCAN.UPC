@@ -69,8 +69,9 @@ This section demonstrates how to normalize an Affymetrix microarray file. In the
 The first step is to download an example CEL file (which was obtained via Gene Expression Omnibus).
 
 <<>>=
-celFilePath = "Vignette_Example.CEL.gz"
-download.file("http://www.ncbi.nlm.nih.gov/geo/download/?acc=GSM555237&format=file&file=GSM555237%2ECEL%2Egz", celFilePath)
+tmpDir = tempdir()
+getGEOSuppFiles("GSM555237", makeDirectory=FALSE, baseDir=tmpDir)
+celFilePath = file.path(tmpDir, "GSM555237.CEL.gz")
 @
 
 To normalize the file, the \Rfunction{SCAN} function must be invoked. This function requires one mandatory parameter: a path specifying the location of the file to be normalized.
@@ -97,7 +98,7 @@ By default, \Rfunction{SCAN} uses the default mappings between probes and genes 
 Once such a probe-summary has been downloaded, it must be installed in R using code such as the following.
 
 <<download-brainarray, eval=FALSE>>=
-download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", "hgu95ahsentrezgprobe_15.0.0.tar.gz")
+download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/ 15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", "hgu95ahsentrezgprobe_15.0.0.tar.gz")
 install.packages("hgu95ahsentrezgprobe_15.0.0.tar.gz", repos=NULL, type="source")
 library(hgu95ahsentrezgprobe)
 @
@@ -106,6 +107,12 @@ Then the mappings can be applied to a CEL file using code such as the following.
 
 <<scan-brainarray, eval=FALSE>>=
 normalized = SCAN(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
+@
+
+For the microarray-based normalization functions, samples can be downloaded directly from Gene Expression Ombnibus (GEO) and then normalized in a single step. To do this, substitute the file pattern with the GEO identifier (e.g., GSE22309 or GSM555237).
+
+<<scan-geo, eval=FALSE>>=
+normalized = SCAN("GSM555237")
 @
 
 Finally, we clean up files that were created in this demo.
