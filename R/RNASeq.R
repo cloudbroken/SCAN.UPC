@@ -8,7 +8,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelType="nn", convThreshold=0.01, verbose=TRUE)
+UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelType="nn", convThreshold=0.01, ignoreZeroes=FALSE, verbose=TRUE)
 {
   annotationType = file_ext(annotationFilePath)
 
@@ -39,6 +39,12 @@ UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelTy
       stop("Less than half of the annotations overlap with the data in ", inFilePath, ".", sep="")
 
     data = merge(data, annotationData, by=0, sort=FALSE)
+
+    if (ignoreZeroes)
+    {
+      zeroData = data[which(data[,2]==0),1:2]
+      data = data[which(data[,2]!=0),]
+    }
 
     counts = data[,2]
 
@@ -86,6 +92,9 @@ UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelTy
     upc = round(UPC_Transform(counts, lengths=lengths, gcContent=gc, modelType=modelType, conv=convThreshold), 6)
 
     outSampleData = cbind(data[,1], upc)
+
+    if (ignoreZeroes)
+      outSampleData = rbind(outSampleData, as.matrix(zeroData))
 
     if (is.null(outData))
     {

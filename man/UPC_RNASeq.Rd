@@ -36,6 +36,9 @@ UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn"
   \item{convThreshold}{
      Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge, it may be useful to adjust this value. (This parameter is optional.)
 }
+  \item{ignoreZeroes}{
+     Whether to ignore read counts equal to zero when performing UPC calculations. Default is FALSE.
+}
   \item{verbose}{
      Whether to output more detailed status information as files are normalized. Default is TRUE.
 }
@@ -52,8 +55,9 @@ UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn"
 \author{
   Stephen R. Piccolo
 }
-%\note{
-%}
+\note{
+  RNA-Seq data by nature have a lot of zero read counts. Samples with an excessive number of zeroes may lead to error messages because genes cannot be allocated properly to bins. The user can specify \code{ignoreZeroes=TRUE} to avoid this error. In practice, we have seen that the resulting UPC values are similar with either approach.
+}
 
 % ~Make other sections like Warning with \section{Warning }{....} ~
 
