@@ -1,10 +1,10 @@
 \name{SCAN_TwoColor}
 \alias{SCAN_TwoColor}
 \title{
-  Single-Channel Array Normalization (SCAN) for two-channel Agilent microarrays
+  Single-Channel Array Normalization (SCAN) for Agilent two-color expression microarrays
 }
 \description{
-  This function is used to normalize two-channel expression microarrays (from Agilent) via the SCAN method. In raw form, such microarray data are tab-separate data files.
+  This function is used to normalize Agilent two-color expression microarrays via the SCAN method.
 }
 \usage{
 SCAN_TwoColor(inFilePattern, outFilePath = NA, verbose = TRUE)

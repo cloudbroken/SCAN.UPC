@@ -14,8 +14,12 @@ AAC    255
 
 Most users will want to correct for length and GC content. In this case, a tab-separated annotation file that specifies length and number of GC bases should be included. The first column should contain the gene ID. The second column should contain the length of the gene. The third column should specify the number of number of G or C bases in the gene.
 
-AAB    1767    640
-AAC    2644    1039
+\begin{tabular}{lll}
+AAB & 1767 & 640 \\
+AAC & 654 & 333 \\
+AAD & 4644 & 2039 \\
+AAE & 2629 & 1011 \\
+\end{tabular}
 }
 \usage{
 UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn", convThreshold = 0.01, verbose = TRUE)

@@ -1,7 +1,7 @@
 Package: SCAN.UPC
 Type: Package
 Title: Single-channel array normalization (SCAN) and University Probability of expression Codes (UPC)
-Version: 2.1.3
+Version: 2.2.0
 Author: Stephen R. Piccolo and Andrea H. Bild and W. Evan Johnson
 Maintainer: Stephen R. Piccolo <stephen.piccolo@hsc.utah.edu>
 Description: SCAN is a microarray normalization method to facilitate personalized-medicine workflows. Rather than processing microarray samples as groups, which can introduce biases and present logistical challenges, SCAN normalizes each sample individually by modeling and removing probe- and array-specific background noise using only data from within each array. SCAN can be applied to one-channel (e.g., Affymetrix) or two-channel (e.g., Agilent) microarrays. The Universal Probability of expression Codes (UPC) method is an extension of SCAN that generates probability-of-expression values. These values can be interpreted as the probability that a given genomic feature (e.g., gene, transcript) is expressed above the background in a given sample. The UPC method can be applied to one-channel or two-channel microarrays as well as to RNA-Seq read counts. Because UPC values are represented on the same scale and have an identical interpretation for each platform, they can be used for cross-platform data integration.)
