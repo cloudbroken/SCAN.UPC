@@ -5,21 +5,9 @@
   Universal Probability of expression Codes (UPC) for RNA-Seq data
 }
 \description{
-This function is used to normalize RNA-Sequencing data via the UPC method. A necessary preliminary step is to generate read counts for each gene (or transcript or exon). A popular approach for accomplishing this is to use the Tophat short-read aligner (http://tophat.cbcb.umd.edu/), followed by application of the htseq-count tool (http://www-huber.embl.de/users/anders/HTSeq/).
+This function is used to derive UPC values for RNA-Seq data. It requires an input file that specifies a read count for each genomic region (e.g., gene). This file should list a unique identifier for each region in the first column and corresponding read counts (not RPKM/FPKM values) in the second column.
 
-Gene (or transcript or exon) values can be converted to UPCs using this function. The tab-separated data file should contain a row for each gene. The first column should contain the gene ID. The second column should contain the read counts (not RPKM/FPKM values). For example:
-
-AAB    31
-AAC    255
-
-Most users will want to correct for length and GC content. In this case, a tab-separated annotation file that specifies length and number of GC bases should be included. The first column should contain the gene ID. The second column should contain the length of the gene. The third column should specify the number of number of G or C bases in the gene.
-
-\begin{tabular}{lll}
-AAB & 1767 & 640 \\
-AAC & 654 & 333 \\
-AAD & 4644 & 2039 \\
-AAE & 2629 & 1011 \\
-\end{tabular}
+This function also can correct for the GC content and length of each genomic region. Users who wish to enable this correction must provide a separate annotation file. This tab-separated file should contain a row for each genomic region. The first column should contain a unique identifier that corresponds to identifiers from the read-count input file. The second column should indicate the length of the genomic region. And the third column should specify the number of G or C bases in the region.
 }
 \usage{
 UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn", convThreshold = 0.01, verbose = TRUE)
@@ -69,8 +57,11 @@ UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn"
 % ~~objects to See Also as \code{\link{help}}, ~~~
 %}
 
-%\examples{
-%}
+\examples{
+\dontrun{
+upc3 = UPC_RNASeq("ReadCounts.txt", "Annotation.txt")
+}
+}
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
