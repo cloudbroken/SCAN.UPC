@@ -55,6 +55,7 @@ The first step is to download a CEL file via the GEOquery package.
 
 <<>>=
 tmpDir = tempdir()
+library(GEOquery)
 getGEOSuppFiles("GSM555237", makeDirectory=FALSE, baseDir=tmpDir)
 celFilePath = file.path(tmpDir, "GSM555237.CEL.gz")
 @
