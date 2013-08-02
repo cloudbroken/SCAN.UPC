@@ -47,7 +47,7 @@ SCAN_TwoColor(inFilePattern, outFilePath = NA, verbose = TRUE)
 # Download an example file and save it as a temporary local file
 tmpDir = tempdir()
 getGEOSuppFiles("GSM1072833", makeDirectory=FALSE, baseDir=tmpDir)
-inFilePath = file.path(tmpDir, "GSM1072833.CEL.gz")
+inFilePath = file.path(tmpDir, "GSM1072833_252747810638_020510_S01_CGH_105_Dec08_1_2.txt.gz")
 
 # Normalize the file and save output to a file
 result = SCAN_TwoColor(inFilePath, "output_file.txt")
