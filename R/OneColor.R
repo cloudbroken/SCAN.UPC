@@ -179,6 +179,8 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
 
   if (!any(is.na(probeSummaryPackage)))
   {
+
+
     probeSetNames = get("Probe.Set.Name", probeSummaryPackage)
     probeSummaryXCoord = get("x", probeSummaryPackage)
     probeSummaryYCoord = get("y", probeSummaryPackage)

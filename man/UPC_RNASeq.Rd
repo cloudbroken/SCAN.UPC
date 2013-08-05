@@ -10,7 +10,7 @@ This function is used to derive UPC values for RNA-Seq data. It requires an inpu
 This function also can correct for the GC content and length of each genomic region. Users who wish to enable this correction must provide a separate annotation file. This tab-separated file should contain a row for each genomic region. The first column should contain a unique identifier that corresponds to identifiers from the read-count input file. The second column should indicate the length of the genomic region. And the third column should specify the number of G or C bases in the region.
 }
 \usage{
-UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn", convThreshold = 0.01, verbose = TRUE)
+UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn", convThreshold = 0.01, ignoreZeroes = FALSE, verbose = TRUE)
 }
 \arguments{
   \item{inFilePattern}{
