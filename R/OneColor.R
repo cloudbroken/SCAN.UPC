@@ -8,14 +8,6 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-#parallel=32  #Number of CEL files to SCAN at the same time
-#library(snow)
-#cl= makeCluster(parallel, type = "SOCK")
-#library(SCAN.UPC)
-#celfiles= list.files("/home/yshen3/protected_johnsonlab/data/Ying/scan_tmp/",pattern=".CEL",full.names=T)
-#normalized = parSapply(cl, celfiles, SCAN)
-#stopCluster(cl)
-
 SCAN = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
 {
   return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))

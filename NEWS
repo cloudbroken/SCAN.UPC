@@ -1,0 +1,31 @@
+CHANGES IN VERSION 2.2.8
+-------------------------
+
+NEW FEATURES
+
+    o Ability to download microarray data directly from
+    Gene Expression Omnibus and normalize the files in
+    a single command.
+
+    o Alternate functions (SCANfast and UPCfast) for
+    performing SCAN and UPC normalization that use fewer
+    probes and thus execute in ~60% less time.
+
+    o Ability to execute normalize multiple .CEL files in
+    parallel either across multiple cores on a single
+    computer or across multiple computers on a cluster.
+
+    o Ability to generate RNA-Seq annotation files to be used
+    with the UPC_RNASeq function from GTF/FASTA source files.
+
+    o Ability to download and install BrainArray packages
+    via an R function.
+
+    o Improved support for Affymetrix exon arrays.
+
+    o Improved support for Affymetrix HT_HG-U133A early
+    access exon arrays.
+
+OTHER
+
+    o Various improvements and clarifications to the docs.
