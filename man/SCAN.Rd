@@ -47,7 +47,6 @@ UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackag
 }
 }
 \details{
-  Because the SCAN algorithm accounts for nucleotide-level genomic composition across thousands of probes, it may take several minutes to normalize a sample, depending on the computer's processor speed and the type of microarray. To enable users to normalize samples in a shorter period of time, we have provided an alternative function called \code{SCANfast}. In this approach, a smaller number of probes is used for normalization, and a less stringent convergence threshold is used by default. We have found that microarrays processed with \code{SCANfast} (using default parameters) require 60\% less processing time but produce output values that correlate strongly (r = 0.998) with values produced by the \code{SCAN} function for the same arrays.
 }
 \value{
   An \code{ExpressionSet} object that contains a row for each probeset/gene/transcript and a column for each input file.
@@ -63,6 +62,10 @@ UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackag
 If a Gene Expression Omnibus (GEO) identifier is specified for the \code{celFilePattern} parameter, an attempt will be made to download the sample(s) directly from GEO. If a study identifier (e.g., GSE22309) is specified, all CEL files from that study will be downloaded. If a sample identifier (e.g., GSM555237) is specified, only that sample will be downloaded.
 
 By default, \code{SCAN} and \code{UPC} use the default mappings between probes and genes that have been provided by the manufacturer. However, these mappings may be outdated or may include problematic probes (for example, those that cross hybridize). The default mappings also may produce multiple summary values per gene. Alternative mappings, such as those provided by the BrainArray resource (see \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/genomic_curated_CDF.asp}), allow \code{SCAN} and \code{UPC} to produce a single value per gene and to use updated gene definitions. Users can specify alternative mappings using the \code{probeSummaryPackage} parameter. If specified, this package must conform to the standards of the \code{AnnotationDbi} package. The BrainArray packages can be downloaded from \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/CDF_download.asp}. When using BrainArray, be sure to download the R source package for probe-level mappings (see vignette for more information).
+
+Because the SCAN/UPC algorithm accounts for nucleotide-level genomic composition across thousands of probes, it may take several minutes to normalize a sample, depending on the computer's processor speed and the type of microarray. To enable users to normalize samples in a shorter period of time, we have provided alternative functions called \code{SCANfast} and \code{UPCfast}. In this approach, a smaller number of probes is used for normalization, and a less stringent convergence threshold is used by default. We have found that microarrays processed with \code{SCANfast} (using default parameters) require 60\% less processing time but produce output values that correlate strongly (r = 0.998) with values produced by the \code{SCAN} function for the same arrays.
+
+It is also possible to execute these functions in parallel. This approach uses the \code{foreach} package behind the scenes. If you have registered a parallel backend (for example, via the \code{doParallel} package), multiple CEL files can be processed in parallel. Otherwise, the files will be processed sequentially.
 }
 
 % ~Make other sections like Warning with \section{Warning }{....} ~
@@ -91,6 +94,13 @@ getGEOSuppFiles("GSM555237", makeDirectory=FALSE, baseDir=tmpDir)
 celFilePath = file.path(tmpDir, "GSM555237.CEL.gz")
 pkgName = InstallBrainArrayPackage(celFilePath, "17.0.1", "hs", "entrezg")
 normalized = SCAN(celFilePath, probeSummaryPackage=pkgName)
+
+# Normalize multiple files in parallel on multiple cores within a given
+# computer. It is also possible using the doParallel package to spread
+# the workload across multiple computers on a cluster.
+library(doParallel)
+registerDoParallel(cores=2)
+result = SCAN("GSE22309")
 }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
