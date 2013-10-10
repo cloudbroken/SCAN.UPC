@@ -2,10 +2,10 @@
 \alias{UPC_TwoColor}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  Universal Probability of expression Codes (UPC) for two-channel microarrays
+  Universal exPression Codes (UPC) for two-channel microarrays
 }
 \description{
-  This function is used to normalize two-channel expression microarrays (from Agilent) using the Universal Probability of expression Codes (UPC) approach. In raw form, such microarray data come in the form of tab-separate data files.
+  This function is used to normalize two-channel expression microarrays (from Agilent) using the Universal exPression Codes (UPC) approach. In raw form, such microarray data come in the form of tab-separate data files.
 }
 \usage{
 UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01, verbose = TRUE)
@@ -34,7 +34,7 @@ UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01
   A list is returned, containing two elements: a matrix containing UPC values and a vector of probe names that correspond to each row of the matrix. The matrix will contain two columns---one corresponding to each channel---for each sample. When the array design uses duplicate probe names (this is common for control probes), the vector of probe names will also contain duplicates.
 }
 \references{
-  Piccolo SR, Sun Y, Campbell JD, Lenburg ME, Bild AH, and Johnson WE. A single-sample microarray normalization method to facilitate personalized-medicine workflows. \emph{Genomics}, 2012, 100:6, pp. 337-344.
+  Piccolo SR, Withers MR, Francis OE, Bild AH and Johnson WE. Multi-platform single-sample estimates of transcriptional activation. Proceedings of the National Academy of Sciences of the United States of America, 2013, in press.
 }
 \author{
   Stephen R. Piccolo
@@ -51,16 +51,8 @@ UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01
 
 \examples{
 \dontrun{
-# Download an example file and save it as a temporary local file
-tmpDir = tempdir()
-getGEOSuppFiles("GSM1072833", makeDirectory=FALSE, baseDir=tmpDir)
-inFilePath = file.path(tmpDir, "GSM1072833.CEL.gz")
-
-# Normalize the file and save output to a file
-result = UPC_TwoColor(inFilePath, "output_file.txt")
-
-# Download a file directly from GEO and normalize it in one step
-result = UPC_TwoColor("GSM1072833")
+# Normalize a file from GEO and save output to a file
+result = UPC_TwoColor("GSM1072833", "output_file.txt")
 }
 }
 

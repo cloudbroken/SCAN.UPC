@@ -1,3 +1,5 @@
+citHeader("Depending on whether you use the SCAN or UPC approach, please cite one of the following articles:")
+
 citEntry(entry = "Article",
          "author" = "Stephen R. Piccolo and Ying Sun and Joshua D. Campbell and Marc E. Lenburg and Andrea H. Bild and W. Evan Johnson",
          "title" = "A single-sample microarray normalization method to facilitate personalized-medicine workflows",
@@ -10,5 +12,20 @@ citEntry(entry = "Article",
          doi = "http://dx.doi.org/10.1016/j.ygeno.2012.08.003",
          publisher = "Elsevier",
          address = "Oxford, UK",
-         textVersion = "Piccolo, S. R., Sun, Y., Campbell, J. D., Lenburg, M. E., Bild, A. H., and Johnson, W. E. 2012. A single-sample microarray normalization method to facilitate personalized-medicine workflows. Genomics, in press, http://dx.doi.org/10.1016/j.ygeno.2012.08.003."
+         textVersion = "Piccolo SR, Sun Y, Campbell JD, Lenburg ME, Bild AH, and Johnson WE. A single-sample microarray normalization method to facilitate personalized-medicine workflows. Genomics, 2012, 100(6), 337-44. "
+) 
+
+citEntry(entry = "Article",
+         "author" = "Stephen R. Piccolo and Michelle R. Withers and Owen E. Francis and Andrea H. Bild and W. Evan Johnson",
+         "title" = "Multi-platform single-sample estimates of transcriptional activation",
+         journal = "Proceedings of the National Academy of Sciences of the United States of America",
+         volume = "in press",
+         number = "",
+         year = "2013",
+         issn = "",
+         pages = "",
+         doi = "http://dx.doi.org/10.1016/j.ygeno.2012.08.003",
+         publisher = "",
+         address = "",
+         textVersion = "Piccolo SR, Withers MR, Francis OE, Bild AH and Johnson WE. Multi-platform single-sample estimates of transcriptional activation. Proceedings of the National Academy of Sciences of the United States of America, 2013, in press."
 ) 

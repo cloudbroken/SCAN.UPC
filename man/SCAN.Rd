@@ -1,19 +1,28 @@
 \name{SCAN}
 \alias{SCAN}
+\alias{SCANfast}
+\alias{UPC}
+\alias{UPCfast}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  Single-Channel Array Normalization (SCAN)
+  Single-Channel Array Normalization (SCAN) and Universal exPression Codes (UPC) for Affymetrix microarrays
 }
 \description{
-  This function is used to normalize single-channel expression microarrays via the SCAN method. In raw form, such microarray data come in the form of Affymetrix .CEL files.
+  This function is used to normalize Affymetrix .CEL files via the SCAN and UPC methods.
 }
 \usage{
 SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA, probeSummaryPackage = NA,
      probeLevelOutDirPath = NA, exonArrayTarget=NA, verbose = TRUE)
+SCANfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackageName = NA, probeSummaryPackage = NA,
+     probeLevelOutDirPath = NA, exonArrayTarget=NA, verbose = TRUE)
+UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA, probeSummaryPackage = NA,
+     probeLevelOutDirPath = NA, exonArrayTarget = NA, verbose = TRUE)
+UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackageName = NA, probeSummaryPackage = NA,
+     probeLevelOutDirPath = NA, exonArrayTarget = NA, verbose = TRUE)
 }
 \arguments{
   \item{celFilePattern}{
-     Absolute or relative path to the input file to be processed. To process multiple files, wildcard characters can be  used (e.g., "*.CEL"). Alternatively, a Gene Expression Omnibus identifier (e.g., GSE22309 or GSM555237) can be specified. This is the only required parameter.
+     Absolute or relative path to the input file to be processed. This is the only required parameter. To process multiple files, wildcard characters can be  used (e.g., "*.CEL"). Alternatively, a Gene Expression Omnibus identifier (e.g., GSE22309 or GSM555237) can be specified. 
 }
   \item{outFilePath}{
      Absolute or relative path where the output file will be saved. This is optional.
@@ -28,7 +37,7 @@ SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageNa
      An R package that specifies alternative probe/gene mappings. This is optional. See note below for more details.
 }
   \item{probeLevelOutDirPath}{
-     Absolute or relative path to a directory where probe-level normalized values can be saved. This is optional. By default, the probe-level values will be discarded after they have been summarized. However, if the user has a need to repeatedly process the same file (perhaps to try various probe/gene mappings), this option can be useful because SCAN will retrieve previously normalized values if a probe-level file exists, rather than renormalize the raw data. The user should be aware that probe-level files may consume a considerable amount of disk space.
+     Absolute or relative path to a directory where probe-level normalized values can be saved. This is optional. By default, the probe-level values will be discarded after they have been summarized. However, if the user has a need to repeatedly process the same file (perhaps to try various probe/gene mappings), this option can be useful because \code{SCAN} will retrieve previously normalized values if a probe-level file exists, rather than renormalize the raw data. The user should be aware that probe-level files may consume a considerable amount of disk space.
 }
   \item{exonArrayTarget}{
      The type of probes to be used. This parameter is optional and should only be specified when Affymetrix Exon 1.0 ST arrays are being processed. This parameter allows the user to specify the subset of probes that should be used and how the probes should be grouped. Available options are NA, "core", "extended", "full", or "probeset". When "probeset" is used, all probes will be used, and the probes will be grouped according to the Affymetrix probeset definitions. When "core", "extended", or "full" are used, the probes that Affymetrix has defined to fall within each classification will be used, and probes will be grouped by Entrez Gene IDs (as defined in the corresponding annotation package). It is recommended to specify "probeset" when the \emph{probeSummaryPackage} parameter is being used so that all probes will be considered.
@@ -37,14 +46,15 @@ SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageNa
      Whether to output more detailed status information as files are normalized. Default is TRUE.
 }
 }
-%\details{
-%  ~~ If necessary, more details than the description above ~~
-%}
+\details{
+  Because the SCAN algorithm accounts for nucleotide-level genomic composition across thousands of probes, it may take several minutes to normalize a sample, depending on the computer's processor speed and the type of microarray. To enable users to normalize samples in a shorter period of time, we have provided an alternative function called \code{SCANfast}. In this approach, a smaller number of probes is used for normalization, and a less stringent convergence threshold is used by default. We have found that microarrays processed with \code{SCANfast} (using default parameters) require 60\% less processing time but produce output values that correlate strongly (r = 0.998) with values produced by the \code{SCAN} function for the same arrays.
+}
 \value{
   An \code{ExpressionSet} object that contains a row for each probeset/gene/transcript and a column for each input file.
 }
 \references{
   Piccolo SR, Sun Y, Campbell JD, Lenburg ME, Bild AH, and Johnson WE. A single-sample microarray normalization method to facilitate personalized-medicine workflows. \emph{Genomics}, 2012, 100:6, pp. 337-344.
+  Piccolo SR, Withers MR, Francis OE, Bild AH and Johnson WE. Multi-platform single-sample estimates of transcriptional activation. Proceedings of the National Academy of Sciences of the United States of America, 2013, in press.
 }
 \author{
   Stephen R. Piccolo
@@ -52,7 +62,7 @@ SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageNa
 \note{
 If a Gene Expression Omnibus (GEO) identifier is specified for the \code{celFilePattern} parameter, an attempt will be made to download the sample(s) directly from GEO. If a study identifier (e.g., GSE22309) is specified, all CEL files from that study will be downloaded. If a sample identifier (e.g., GSM555237) is specified, only that sample will be downloaded.
 
-By default, \code{SCAN} uses the default mappings between probes and genes that have been provided by the manufacturer. However, these mappings may be outdated or may include problematic probes (for example, those that cross hybridize). The default mappings also may produce multiple summary values per gene. Alternative mappings, such as those provided by the BrainArray resource (see \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/genomic_curated_CDF.asp}), allow \code{SCAN} to produce a single value per gene and to use updated gene definitions. Users can specify alternative mappings using the \code{probeSummaryPackage} parameter. If specified, this package must conform to the standards of the \code{AnnotationDbi} package. The BrainArray packages can be downloaded from \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/CDF_download.asp}. When using BrainArray, be sure to download the R source package for probe-level mappings (see vignette for more information).
+By default, \code{SCAN} and \code{UPC} use the default mappings between probes and genes that have been provided by the manufacturer. However, these mappings may be outdated or may include problematic probes (for example, those that cross hybridize). The default mappings also may produce multiple summary values per gene. Alternative mappings, such as those provided by the BrainArray resource (see \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/genomic_curated_CDF.asp}), allow \code{SCAN} and \code{UPC} to produce a single value per gene and to use updated gene definitions. Users can specify alternative mappings using the \code{probeSummaryPackage} parameter. If specified, this package must conform to the standards of the \code{AnnotationDbi} package. The BrainArray packages can be downloaded from \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/CDF_download.asp}. When using BrainArray, be sure to download the R source package for probe-level mappings (see vignette for more information).
 }
 
 % ~Make other sections like Warning with \section{Warning }{....} ~
@@ -62,30 +72,26 @@ By default, \code{SCAN} uses the default mappings between probes and genes that 
 %}
 
 \examples{
-# Download an example CEL file and save it as a temporary local file
+\dontrun{
+# SCAN normalize a CEL file from GEO
+normalized = SCAN("GSM555237")
+
+# UPC normalize a CEL file from GEO
+normalized = UPC("GSM555237")
+
+# Normalize a CEL file and save output to a file
+normalized = SCAN("GSM555237", "output_file.txt")
+
+# Normalize a CEL file and summarize at the gene level using BrainArray
+# mappings for Entrez Gene. First it is necessary to install the package
+# and obtain the package name. For demonstration purposes, this file
+# will be downloaded manually from GEO.
 tmpDir = tempdir()
 getGEOSuppFiles("GSM555237", makeDirectory=FALSE, baseDir=tmpDir)
 celFilePath = file.path(tmpDir, "GSM555237.CEL.gz")
-
-# Normalize a CEL file
-normalized = SCAN(celFilePath)
-
-# Normalize a CEL file and save output to a file
-normalized = SCAN(celFilePath, "output_file.txt")
-
-\dontrun{
-# Normalize a CEL file and summarize at the gene level using BrainArray
-# mappings for Entrez Gene
-probeFilePath = file.path(tempdir(), "hgu95ahsentrezgprobe_15.0.0.tar.gz")
-download.file("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/ 15.0.0/entrezg.download/hgu95ahsentrezgprobe_15.0.0.tar.gz", probeFilePath)
-install.packages(probeFilePath, repos=NULL, type="source")
-library(hgu95ahsentrezgprobe)
-normalized = SCAN(celFilePath, probeSummaryPackage=hgu95ahsentrezgprobe)
-
-# Download a CEL file directly from GEO and normalize it in one step
-normalized = SCAN("GSM555237")
+pkgName = InstallBrainArrayPackage(celFilePath, "17.0.1", "hs", "entrezg")
+normalized = SCAN(celFilePath, probeSummaryPackage=pkgName)
 }
-
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

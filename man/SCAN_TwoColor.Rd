@@ -44,16 +44,8 @@ SCAN_TwoColor(inFilePattern, outFilePath = NA, verbose = TRUE)
 
 \examples{
 \dontrun{
-# Download an example file and save it as a temporary local file
-tmpDir = tempdir()
-getGEOSuppFiles("GSM1072833", makeDirectory=FALSE, baseDir=tmpDir)
-inFilePath = file.path(tmpDir, "GSM1072833_252747810638_020510_S01_CGH_105_Dec08_1_2.txt.gz")
-
-# Normalize the file and save output to a file
-result = SCAN_TwoColor(inFilePath, "output_file.txt")
-
-# Download a file directly from GEO and normalize it in one step
-result = SCAN_TwoColor("GSM1072833")
+# Normalize a file from GEO and save output to a file
+result = SCAN_TwoColor("GSM1072833", "output_file.txt")
 }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

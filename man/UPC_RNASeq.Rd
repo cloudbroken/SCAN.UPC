@@ -2,12 +2,12 @@
 \alias{UPC_RNASeq}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  Universal Probability of expression Codes (UPC) for RNA-Seq data
+  Universal exPression Codes (UPC) for RNA-Seq data
 }
 \description{
 This function is used to derive UPC values for RNA-Seq data. It requires an input file that specifies a read count for each genomic region (e.g., gene). This file should list a unique identifier for each region in the first column and corresponding read counts (not RPKM/FPKM values) in the second column.
 
-This function also can correct for the GC content and length of each genomic region. Users who wish to enable this correction must provide a separate annotation file. This tab-separated file should contain a row for each genomic region. The first column should contain a unique identifier that corresponds to identifiers from the read-count input file. The second column should indicate the length of the genomic region. And the third column should specify the number of G or C bases in the region.
+This function also can correct for the GC content and length of each genomic region. Users who wish to enable this correction must provide a separate annotation file. This tab-separated file should contain a row for each genomic region. The first column should contain a unique identifier that corresponds to identifiers from the read-count input file. The second column should indicate the length of the genomic region. And the third column should specify the number of G or C bases in the region. The \code{\link{ParseMetaFromGtfFile}} function can be used to generate annotation files.
 }
 \usage{
 UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn", convThreshold = 0.01, ignoreZeroes = FALSE, verbose = TRUE)
@@ -42,7 +42,7 @@ UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn"
   An \code{ExpressionSet} object that contains a row for each probeset/gene/transcript and a column for each input file.
 }
 \references{
-  Piccolo SR, Sun Y, Campbell JD, Lenburg ME, Bild AH, and Johnson WE. A single-sample microarray normalization method to facilitate personalized-medicine workflows. \emph{Genomics}, 2012, 100:6, pp. 337-344.
+  Piccolo SR, Withers MR, Francis OE, Bild AH and Johnson WE. Multi-platform single-sample estimates of transcriptional activation. Proceedings of the National Academy of Sciences of the United States of America, 2013, in press.
 }
 \author{
   Stephen R. Piccolo
@@ -59,7 +59,7 @@ UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn"
 
 \examples{
 \dontrun{
-upc3 = UPC_RNASeq("ReadCounts.txt", "Annotation.txt")
+result = UPC_RNASeq("ReadCounts.txt", "Annotation.txt")
 }
 }
 

@@ -8,17 +8,40 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
+#parallel=32  #Number of CEL files to SCAN at the same time
+#library(snow)
+#cl= makeCluster(parallel, type = "SOCK")
+#library(SCAN.UPC)
+#celfiles= list.files("/home/yshen3/protected_johnsonlab/data/Ying/scan_tmp/",pattern=".CEL",full.names=T)
+#normalized = parSapply(cl, celfiles, SCAN)
+#stopCluster(cl)
+
 SCAN = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
 {
   return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))
 }
+
+SCANfast = function(celFilePattern, outFilePath=NA, convThreshold=0.50, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
+{
+  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=10000, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+}
+
+#SCANparallel = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
+#{
+#  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=10000, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+#}
 
 UPC = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
 {
   return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, exonArrayTarget=exonArrayTarget, verbose=verbose))
 }
 
-processCelFiles = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, exonArrayTarget=NA, verbose=TRUE)
+UPCfast = function(celFilePattern, outFilePath=NA, convThreshold=0.50, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
+{
+  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=10000, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+}
+
+processCelFiles = function(celFilePattern, outFilePath=NA, intervalN=50000, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, exonArrayTarget=NA, verbose=TRUE)
 {
   if (convThreshold >= 1)
     stop("The convThreshold value must be lower than 1.0.")
@@ -37,15 +60,16 @@ processCelFiles = function(celFilePattern, outFilePath=NA, convThreshold=0.01, a
   if (!is.na(probeLevelOutDirPath))
     createOutputDir(dirPath=probeLevelOutDirPath, verbose=verbose)
 
+  celSummarizedList = foreach(celFilePath=celFilePaths) %dopar% {
+    processCelFile(celFilePath=celFilePath, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, UPC=UPC, intervalN=intervalN, convThreshold=convThreshold, probeLevelOutDirPath=probeLevelOutDirPath, exonArrayTarget=exonArrayTarget, verbose=verbose)
+  }
+
   summarized = NULL
 
-  for (celFilePath in celFilePaths)
+  for (i in 1:length(celFilePaths))
   {
-    probeLevelOutFilePath = NA
-    if (!is.na(probeLevelOutDirPath))
-      probeLevelOutFilePath = paste(probeLevelOutDirPath, "/", basename(celFilePath), ".txt", sep="")
-
-    celSummarized = processCelFile(celFilePath=celFilePath, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, UPC=UPC, convThreshold=convThreshold, probeLevelOutFilePath=probeLevelOutFilePath, exonArrayTarget=exonArrayTarget, verbose=verbose)
+    celSummarized = celSummarizedList[[i]]
+    celFilePath = celFilePaths[i]
 
     if (is.null(celSummarized))
       next
@@ -84,8 +108,12 @@ createOutputDir = function(dirPath, verbose=TRUE)
   }
 }
 
-processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackage, UPC, probeLevelOutFilePath, exonArrayTarget, nbins=25, binsize=5000, convThreshold=0.01, verbose=TRUE)
+processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackage, UPC, probeLevelOutDirPath, exonArrayTarget, intervalN, nbins=25, binsize=5000, convThreshold=0.01, verbose=TRUE)
 {
+  probeLevelOutFilePath = NA
+  if (!is.na(probeLevelOutDirPath))
+    probeLevelOutFilePath = paste(probeLevelOutDirPath, "/", basename(celFilePath), ".txt", sep="")
+
   if (is.na(annotationPackageName))
   {
     affyExpressionFS <- read.celfiles(celFilePath)
@@ -147,7 +175,7 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
 
     my = log2(pint)
     nGroups = length(my) / binsize
-    samplingProbeIndices = getSampleIndices(total=length(pint), verbose=verbose)
+    samplingProbeIndices = getSampleIndices(total=length(pint), intervalN=intervalN, verbose=verbose)
 
     mixResult = EM_vMix(y=my[samplingProbeIndices], X=mx[samplingProbeIndices,], nbins=nbins, convThreshold=convThreshold, verbose=verbose, demo=length(grep("Vignette_Example", basename(celFilePath))) > 0)
 
@@ -177,9 +205,13 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
     }
   }
 
-  if (!any(is.na(probeSummaryPackage)))
+  if (!any(is.na(probeSummaryPackage)) && probeSummaryPackage != "NA")
   {
-
+    if (is.character(probeSummaryPackage))
+    {
+      message(paste("Attempting to load", probeSummaryPackage))
+      probeSummaryPackage = eval(as.name(probeSummaryPackage))
+    }
 
     probeSetNames = get("Probe.Set.Name", probeSummaryPackage)
     probeSummaryXCoord = get("x", probeSummaryPackage)
@@ -212,9 +244,9 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
   return(as.matrix(tapply(y_norm[dataProbeIndices], probeNames, FUN=mean, trim=0.1)))
 }
 
-getSampleIndices = function(total, verbose=TRUE)
+getSampleIndices = function(total, intervalN, verbose=TRUE)
 {
-  interval = floor(total / 50000)
+  interval = floor(total / intervalN)
   if (interval <= 1)
     interval = 1
 
