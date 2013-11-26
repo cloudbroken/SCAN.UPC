@@ -8,24 +8,41 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-UPC_Transform = function(x, lengths=NULL, gcContent=NULL, modelType="nn", conv=0.001)
+UPC_Generic = function(expressionValues, lengths=NULL, gcContent=NULL, modelType="nn", convThreshold=0.001, verbose=TRUE)
 {
+  if (is.null(lengths))
+    warning("No annotation information was present for length, so no correction will be made for this.")
+
+  if (is.null(gcContent))
+    warning("No annotation information was present for GC content, so no correction will be made for this.")
+
   if (!(modelType%in%c("nn", "ln", "nb")))
     stop(paste("The specified modelType value (", modelType, ") is invalid. Must be nn, ln, or nb.", sep=""))
 
   if (!is.null(lengths))
+  {
+    if (length(lengths) != length(expressionValues))
+      stop(paste("The size of expressionValues (", length(expressionValues), ") is not identical to the size of lengths (", length(lengths), ")", sep=""))
+
     lengths = log2(lengths)
+  }
+
+  if (!is.null(gcContent))
+  {
+    if (length(gcContent) != length(expressionValues))
+      stop(paste("The size of expressionValues (", length(expressionValues), ") is not identical to the size of gcContent (", length(gcContent), ")", sep=""))
+  }
 
   if (modelType == "nn")
   {
     message("Calculating UPC values using the normal-normal model.")
-    upcs = UPC_nn(log2(x+2), l=lengths, gc=gcContent, conv=conv)
+    upcs = UPC_nn(log2(expressionValues+2), l=lengths, gc=gcContent, conv=convThreshold)
   }
 
   if (modelType == "ln")
   {
     message("Calculating UPC values using the log-normal model.")
-    upcs = UPC_ln(log2(x+2), l=lengths, gc=gcContent, conv=conv)
+    upcs = UPC_ln(log2(expressionValues+2), l=lengths, gc=gcContent, conv=convThreshold)
   }
 
   if (modelType == "nb")
@@ -34,13 +51,13 @@ UPC_Transform = function(x, lengths=NULL, gcContent=NULL, modelType="nn", conv=0
 
     tryNegBinom = function()
     {
-      return(UPC_nb(log2(x + 2), l=lengths, gc=gcContent, conv=conv))
+      return(UPC_nb(log2(expressionValues + 2), l=lengths, gc=gcContent, conv=convThreshold))
     }
     retryNegBinom = function(e)
     {
       message(e)
       message("\nRetrying...")
-      return(UPC_nb(log2(x+2), l=lengths, gc=gcContent, conv=conv))
+      return(UPC_nb(log2(expressionValues+2), l=lengths, gc=gcContent, conv=convThreshold))
     }
   
     upcs = tryCatch(tryNegBinom(), error=retryNegBinom)
@@ -50,16 +67,23 @@ UPC_Transform = function(x, lengths=NULL, gcContent=NULL, modelType="nn", conv=0
 }
 
 UPC_nn = function(y,l=NULL,gc=NULL,conv=0.001,q=1) {
-  groups=rep(1,length(y))
-  probs=numeric(length(y))
+  groups = rep(1, length(y))
+  probs = numeric(length(y))
 
   for (j in unique(groups)){
-    use=(groups==j)
+    use = (groups==j)
 
-    if (!is.null(l) | !is.null(gc)) {
-      X=1.*cbind(matrix(1,nrow=length(y),ncol=1),l,l^2,gc)[use,]
-    } else {
-      X=matrix(1,nrow=length(y[use]),ncol=1)
+    if (is.null(l) && is.null(gc)) {
+      X = matrix(1, nrow=length(y[use]), ncol=1)
+    }
+    if (is.null(l) && !is.null(gc)) {
+      X = 1.*cbind(matrix(1, nrow=length(y), ncol=1), gc)[use,]
+    }
+    if (!is.null(l) && is.null(gc)) {
+      X = 1.*cbind(matrix(1, nrow=length(y), ncol=1), l, l^2)[use,]
+    }
+    if (!is.null(l) && !is.null(gc)) {
+      X = 1.*cbind(matrix(1, nrow=length(y), ncol=1), l, l^2, gc)[use,]
     }
 
     y1=y[use]
@@ -137,21 +161,18 @@ UPC_ln = function(genecounts, l=NULL, gc=NULL, conv=0.001)
   return(RS_BC(genecounts, l, gc, conv=conv)$probs)
 }
 
-mlln=function(y,x,gam=NULL){
- if(is.null(gam))
-   gam=rep(1,length(y))
-
- bhat=solve(t(x)%*%(gam*x))%*%t(x)%*%(gam*log(y))
- shat=sqrt(sum(gam*(log(y)-x%*%bhat)^2)/sum(gam))
-
- return(list(bhat=bhat,shat=shat))
-}
-
-RS_BC=function(y,l=NULL,gc=NULL,start=NULL,conv){
-  if (!is.null(l) | !is.null(gc)) {
-    x = cbind(matrix(rep(1,length(y)),ncol=1),1.*(y>median(y)),l,l^2,l^3,gc,gc^2,gc^3)
-  } else {
+RS_BC=function(y, l=NULL, gc=NULL, start=NULL, conv){
+  if (is.null(l) && is.null(gc)) {
     x = cbind(matrix(rep(1,length(y)),ncol=1),1.*(y>median(y)))
+  }
+  if (is.null(l) && !is.null(gc)) {
+    x = cbind(matrix(rep(1,length(y)),ncol=1),1.*(y>median(y)),gc,gc^2,gc^3)
+  }
+  if (!is.null(l) && is.null(gc)) {
+    x = cbind(matrix(rep(1,length(y)),ncol=1),1.*(y>median(y)),l,l^2,l^3)
+  }
+  if (!is.null(l) && !is.null(gc)) {
+    x = cbind(matrix(rep(1,length(y)),ncol=1),1.*(y>median(y)),l,l^2,l^3,gc,gc^2,gc^3)
   }
 
   paramsold=Inf
@@ -206,9 +227,30 @@ RS_BC=function(y,l=NULL,gc=NULL,start=NULL,conv){
   return(list(p=p,theta=theta,probs=gam))
 }
 
-UPC_nb = function(y, l=NULL, gc=NULL, start=NULL, conv=0.001, sam=10000){
+mlln=function(y,x,gam=NULL){
+ if(is.null(gam))
+   gam=rep(1,length(y))
 
-  x = cbind(matrix(rep(1,length(y)),ncol=1),l,l^2,gc,gc^2)
+ bhat=solve(t(x)%*%(gam*x))%*%t(x)%*%(gam*log(y))
+ shat=sqrt(sum(gam*(log(y)-x%*%bhat)^2)/sum(gam))
+
+ return(list(bhat=bhat,shat=shat))
+}
+
+UPC_nb = function(y, l=NULL, gc=NULL, start=NULL, conv=0.001, sam=10000){
+  if (is.null(l) && is.null(gc)) {
+    x = cbind(matrix(rep(1,length(y)),ncol=1))
+  }
+  if (is.null(l) && !is.null(gc)) {
+    x = cbind(matrix(rep(1,length(y)),ncol=1),gc,gc^2)
+  }
+  if (!is.null(l) && is.null(gc)) {
+    x = cbind(matrix(rep(1,length(y)),ncol=1),l,l^2)
+  }
+  if (!is.null(l) && !is.null(gc)) {
+    x = cbind(matrix(rep(1,length(y)),ncol=1),l,l^2,gc,gc^2)
+  }
+
   y1=round(y)
 
   paramsold=Inf

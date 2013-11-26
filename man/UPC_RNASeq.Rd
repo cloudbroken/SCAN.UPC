@@ -10,7 +10,7 @@ This function is used to derive UPC values for RNA-Seq data. It requires an inpu
 This function also can correct for the GC content and length of each genomic region. Users who wish to enable this correction must provide a separate annotation file. This tab-separated file should contain a row for each genomic region. The first column should contain a unique identifier that corresponds to identifiers from the read-count input file. The second column should indicate the length of the genomic region. And the third column should specify the number of G or C bases in the region. The \code{\link{ParseMetaFromGtfFile}} function can be used to generate annotation files.
 }
 \usage{
-UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn", convThreshold = 0.01, ignoreZeroes = FALSE, verbose = TRUE)
+UPC_RNASeq(inFilePattern, annotationFilePath = NA, outFilePath = NA, modelType = "nn", convThreshold = 0.01, ignoreZeroes = FALSE, verbose = TRUE)
 }
 \arguments{
   \item{inFilePattern}{
@@ -26,7 +26,7 @@ UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn"
      Various models can be used for the mixture model to differentiate between active and inactive probes. The default is the normal-normal model (``nn''), which uses the normal distribution. Other available options are log-normal (``ln'') and negative-binomial (``nb'').
 }
   \item{convThreshold}{
-     Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge, it may be useful to adjust this value. (This parameter is optional.)
+     Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge (or converges too quickly), it may be useful to adjust this value. (This parameter is optional.)
 }
   \item{ignoreZeroes}{
      Whether to ignore read counts equal to zero when performing UPC calculations. Default is FALSE.
@@ -42,7 +42,7 @@ UPC_RNASeq(inFilePattern, annotationFilePath, outFilePath = NA, modelType = "nn"
   An \code{ExpressionSet} object that contains a row for each probeset/gene/transcript and a column for each input file.
 }
 \references{
-  Piccolo SR, Withers MR, Francis OE, Bild AH and Johnson WE. Multi-platform single-sample estimates of transcriptional activation. Proceedings of the National Academy of Sciences of the United States of America, 2013, in press.
+  Piccolo SR, Withers MR, Francis OE, Bild AH and Johnson WE. Multi-platform single-sample estimates of transcriptional activation. Proceedings of the National Academy of Sciences of the United States of America, 2013, 110:44 17778-17783.
 }
 \author{
   Stephen R. Piccolo

@@ -8,20 +8,15 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelType="nn", convThreshold=0.01, ignoreZeroes=FALSE, verbose=TRUE)
+UPC_RNASeq = function(inFilePattern, annotationFilePath=NA, outFilePath=NA, modelType="nn", convThreshold=0.01, ignoreZeroes=FALSE, verbose=TRUE)
 {
-  annotationType = file_ext(annotationFilePath)
-
-#  if (!(annotationType %in% c("txt")))
-#    stop("The annotationFilePath must have a .txt extension.")
-  #if (!(annotationType %in% c("txt", "gff", "gtf")))
-  #  stop("The annotationFilePath must have a .txt, .gff3, or .gtf extension.")
-
-  if (!(file.exists(annotationFilePath)))
-    stop(paste("No annotation file exists at ", annotationFilePath, ".", sep=""))
-
-  if (annotationType == "txt")
+  if (is.na(annotationFilePath))
   {
+    annotationData = NA
+  } else {
+    if (!(file.exists(annotationFilePath)))
+      stop(paste("No annotation file exists at ", annotationFilePath, ".", sep=""))
+
     print("Importing annotations...")
     annotationData = read.table(annotationFilePath, sep="\t", header=FALSE, stringsAsFactors=FALSE, row.names=1, quote="\"", check.names=FALSE)
   }
@@ -34,11 +29,17 @@ UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelTy
     message(paste("Processing", inFilePath))
     data = read.table(inFilePath, sep="\t", header=FALSE, stringsAsFactors=FALSE, row.names=1, quote="\"", check.names=FALSE)
 
-    numOverlappingAnnotations = length(intersect(rownames(data), rownames(annotationData)))
-    if (numOverlappingAnnotations < (nrow(data) * 0.5))
-      stop("Less than half of the annotations overlap with the data in ", inFilePath, ".", sep="")
+    if (any(is.na(annotationData)))
+    {
+      # This is necessary to make the data consistent when no annotation data are present
+      data = cbind(rownames(data), data[,1])
+    } else {
+      numOverlappingAnnotations = length(intersect(rownames(data), rownames(annotationData)))
+      if (numOverlappingAnnotations < (nrow(data) * 0.5))
+        stop("Less than half of the annotations overlap with the data in ", inFilePath, ".", sep="")
 
-    data = merge(data, annotationData, by=0, sort=FALSE)
+      data = merge(data, annotationData, by=0, sort=FALSE)
+    }
 
     if (ignoreZeroes)
     {
@@ -46,50 +47,53 @@ UPC_RNASeq = function(inFilePattern, annotationFilePath, outFilePath=NA, modelTy
       data = data[which(data[,2]!=0),]
     }
 
-    counts = data[,2]
+    counts = as.numeric(data[,2])
 
-    lengths = NULL
-    gc = NULL
-
-    if (any(is.na(data[,3])))
+    if (ncol(data) == 2)
     {
-      warning("Could not adjust for length because at least one NA value was present.")
+      lengths = NULL
+      gc = NULL
     } else {
-      if (length(unique(data[,3]))==1)
+      if (any(is.na(data[,3])))
       {
-        warning("Could not adjust for length because all values were the same.")
+        warning("Could not adjust for length because at least one NA value was present.")
       } else {
-        lengths = as.numeric(data[,3])
-
-        if (any(is.na(lengths)))
-          stop("At least one of the length values was not numeric (or NA).")
-      }
-    }
-
-    if (ncol(data) == 3)
-    {
-      warning("Could not adjust for GC content because no GC data were present.")
-    } else {
-      if (any(is.na(data[,4])))
-      {
-        warning("Could not adjust for GC content because at least one NA value was present.")
-      } else {
-        if (length(unique(data[,4]))==1)
+        if (length(unique(data[,3]))==1)
         {
-          warning("Could not adjust for GC content because all values were the same.")
-        }
-        else {
-          gc = as.numeric(data[,4])
+          warning("Could not adjust for length because all values were the same.")
+        } else {
+          lengths = as.numeric(data[,3])
 
-          if (any(is.na(gc)))
-            stop("At least one of the gcContent values was not numeric (or NA).")
+          if (any(is.na(lengths)))
+            stop("At least one of the length values was not numeric (or NA).")
+        }
+      }
+
+      if (ncol(data) == 3)
+      {
+        warning("Could not adjust for GC content because no GC data were present.")
+      } else {
+        if (any(is.na(data[,4])))
+        {
+          warning("Could not adjust for GC content because at least one NA value was present.")
+        } else {
+          if (length(unique(data[,4]))==1)
+          {
+            warning("Could not adjust for GC content because all values were the same.")
+          }
+          else {
+            gc = as.numeric(data[,4])
+
+            if (any(is.na(gc)))
+              stop("At least one of the gcContent values was not numeric (or NA).")
           
-          gc = gc / lengths
+            gc = gc / lengths
+          }
         }
       }
     }
 
-    upc = round(UPC_Transform(counts, lengths=lengths, gcContent=gc, modelType=modelType, conv=convThreshold), 6)
+    upc = round(UPC_Generic(counts, lengths=lengths, gcContent=gc, modelType=modelType, convThreshold=convThreshold), 6)
 
     outSampleData = cbind(data[,1], upc)
 

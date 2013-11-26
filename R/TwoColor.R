@@ -40,12 +40,12 @@ ProcessTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcCo
       if (verbose)
         message(paste("Performing UPC transformation (", upcModelType, ") for first channel of ", inFilePath, sep=""))
 
-      normData$norm[,1] = round(UPC_Transform(2^normData$norm[,1], modelType=upcModelType, conv=upcConv), 6)
+      normData$norm[,1] = round(UPC_Generic(2^normData$norm[,1], modelType=upcModelType, convThreshold=upcConv), 6)
 
       if (verbose)
         message(paste("Performing UPC transformation (", upcModelType, ") for second channel of ", inFilePath, sep=""))
 
-      normData$norm[,2] = round(UPC_Transform(2^normData$norm[,2], modelType=upcModelType, conv=upcConv), 6)
+      normData$norm[,2] = round(UPC_Generic(2^normData$norm[,2], modelType=upcModelType, convThreshold=upcConv), 6)
     }
 
     outSampleData = cbind(normData$probeID[,1], normData$norm)

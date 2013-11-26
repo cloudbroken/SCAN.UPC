@@ -46,14 +46,14 @@ UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackag
      Whether to output more detailed status information as files are normalized. Default is TRUE.
 }
 }
-\details{
-}
+%\details{
+%}
 \value{
   An \code{ExpressionSet} object that contains a row for each probeset/gene/transcript and a column for each input file.
 }
 \references{
   Piccolo SR, Sun Y, Campbell JD, Lenburg ME, Bild AH, and Johnson WE. A single-sample microarray normalization method to facilitate personalized-medicine workflows. \emph{Genomics}, 2012, 100:6, pp. 337-344.
-  Piccolo SR, Withers MR, Francis OE, Bild AH and Johnson WE. Multi-platform single-sample estimates of transcriptional activation. Proceedings of the National Academy of Sciences of the United States of America, 2013, in press.
+  Piccolo SR, Withers MR, Francis OE, Bild AH and Johnson WE. Multi-platform single-sample estimates of transcriptional activation. Proceedings of the National Academy of Sciences of the United States of America, 2013, 110(44):11778-17783.
 }
 \author{
   Stephen R. Piccolo
