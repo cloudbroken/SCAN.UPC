@@ -8,7 +8,7 @@
 This function can be used to derive UPC values for various types of mRNA expression data. It requires the user to specify expression values for many genes (or transcripts, exons, or probes). And optionally, the user can specify the length and/or GC content (\# of G or C bases) for the corresponding genomic region (e.g., gene). If these values are specified, the UPC algorithm will correct for biases resulting from length or GC content.
 }
 \usage{
-UPC_Generic(expressionValues, lengths = NULL, gcContent = NULL, modelType = "nn", convThreshold = 0.001, verbose = TRUE)
+UPC_Generic(expressionValues, lengths = NULL, gcContent = NULL, modelType = "nn", convThreshold = 0.001, higherValuesIndicateHigherExpression = TRUE, verbose = TRUE)
 }
 \arguments{
   \item{expressionValues}{
@@ -25,6 +25,9 @@ UPC_Generic(expressionValues, lengths = NULL, gcContent = NULL, modelType = "nn"
 }
   \item{convThreshold}{
      Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge (or converges too quickly), it may be useful to adjust this value. (This parameter is optional.)
+}
+  \item{higherValuesIndicateHigherExpression}{
+     In most cases, higher expression values indicate relatively high expression. However, if higher values indicate relatively low expresssion, this parameter can be used to indicate such. Accordingly, UPC values closer to one will indicate higher expression, and UPC values closer to zero will indicate the opposite. (This parameter is optional.)
 }
   \item{verbose}{
      Whether to output more detailed status information as processing occurs. Default is TRUE.

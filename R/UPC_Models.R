@@ -8,7 +8,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-UPC_Generic = function(expressionValues, lengths=NULL, gcContent=NULL, modelType="nn", convThreshold=0.001, verbose=TRUE)
+UPC_Generic = function(expressionValues, lengths=NULL, gcContent=NULL, modelType="nn", convThreshold=0.001, higherValuesIndicateHigherExpression=TRUE, verbose=TRUE)
 {
   if (is.null(lengths))
     warning("No annotation information was present for length, so no correction will be made for this.")
@@ -33,16 +33,21 @@ UPC_Generic = function(expressionValues, lengths=NULL, gcContent=NULL, modelType
       stop(paste("The size of expressionValues (", length(expressionValues), ") is not identical to the size of gcContent (", length(gcContent), ")", sep=""))
   }
 
+  # Subtract the minimum so there are no negative values, which causes a problem when you do a log transformation
+  # Add 2 so there are no zero values
+  # Log transform to make model derivation easier
+  expressionValues = log2(expressionValues - min(expressionValues) + 2)
+
   if (modelType == "nn")
   {
     message("Calculating UPC values using the normal-normal model.")
-    upcs = UPC_nn(log2(expressionValues+2), l=lengths, gc=gcContent, conv=convThreshold)
+    upcs = UPC_nn(expressionValues, l=lengths, gc=gcContent, conv=convThreshold)
   }
 
   if (modelType == "ln")
   {
     message("Calculating UPC values using the log-normal model.")
-    upcs = UPC_ln(log2(expressionValues+2), l=lengths, gc=gcContent, conv=convThreshold)
+    upcs = UPC_ln(expressionValues, l=lengths, gc=gcContent, conv=convThreshold)
   }
 
   if (modelType == "nb")
@@ -51,22 +56,25 @@ UPC_Generic = function(expressionValues, lengths=NULL, gcContent=NULL, modelType
 
     tryNegBinom = function()
     {
-      return(UPC_nb(log2(expressionValues + 2), l=lengths, gc=gcContent, conv=convThreshold))
+      return(UPC_nb(expressionValues, l=lengths, gc=gcContent, conv=convThreshold))
     }
     retryNegBinom = function(e)
     {
       message(e)
       message("\nRetrying...")
-      return(UPC_nb(log2(expressionValues+2), l=lengths, gc=gcContent, conv=convThreshold))
+      return(UPC_nb(expressionValues, l=lengths, gc=gcContent, conv=convThreshold))
     }
   
     upcs = tryCatch(tryNegBinom(), error=retryNegBinom)
   }
 
+  if (!higherValuesIndicateHigherExpression)
+    upcs = 1 - upcs
+
   return(upcs)
 }
 
-UPC_nn = function(y,l=NULL,gc=NULL,conv=0.001,q=1) {
+UPC_nn = function(y, l=NULL, gc=NULL, conv=0.001, q=1) {
   groups = rep(1, length(y))
   probs = numeric(length(y))
 
