@@ -22,12 +22,20 @@ UPC_RNASeq = function(inFilePattern, annotationFilePath=NA, outFilePath=NA, mode
   }
 
   inFilePaths = list.files(path=dirname(inFilePattern), pattern=glob2rx(basename(inFilePattern)), full.names=TRUE)
+
+  if (length(inFilePaths) == 0)
+    stop("No data files that match the pattern ", inFilePattern, " could be located.")
+
   outData = NULL
+  rowNamesFromFirstFile = NULL
 
   for (inFilePath in inFilePaths)
   {
     message(paste("Processing", inFilePath))
     data = read.table(inFilePath, sep="\t", header=FALSE, stringsAsFactors=FALSE, row.names=1, quote="\"", check.names=FALSE)
+
+    if (is.null(rowNamesFromFirstFile))
+      rowNamesFromFirstFile = rownames(data)
 
     if (any(is.na(annotationData)))
     {
@@ -43,8 +51,28 @@ UPC_RNASeq = function(inFilePattern, annotationFilePath=NA, outFilePath=NA, mode
 
     if (ignoreZeroes)
     {
-      zeroData = data[which(data[,2]==0),1:2]
-      data = data[which(data[,2]!=0),]
+      zeroIndices = which(data[,2] == 0)
+      zeroData = NULL
+
+      if (length(zeroIndices) > 0)
+      {
+        zeroData = as.matrix(data[zeroIndices,1:2])
+        data = data[-zeroIndices,]
+      }
+    }
+
+    naData = NULL
+    naIndicator = is.na(as.numeric(data[,2]))
+    if (any(naIndicator))
+    {
+#      if (sum(naIndicator) == 1)
+#      {
+        naData = data[which(naIndicator),1:2]
+#      } else {
+#        naData = data[which(naIndicator),1:2]
+#      }
+
+      data = data[-which(naIndicator),]
     }
 
     counts = as.numeric(data[,2])
@@ -98,7 +126,9 @@ UPC_RNASeq = function(inFilePattern, annotationFilePath=NA, outFilePath=NA, mode
     outSampleData = cbind(data[,1], upc)
 
     if (ignoreZeroes)
-      outSampleData = rbind(outSampleData, as.matrix(zeroData))
+      outSampleData = rbind(outSampleData, zeroData)
+
+    outSampleData = rbind(outSampleData, naData)
 
     if (is.null(outData))
     {
@@ -107,18 +137,21 @@ UPC_RNASeq = function(inFilePattern, annotationFilePath=NA, outFilePath=NA, mode
       if (verbose)
         message(paste("Merging results for ", inFilePath, "."), sep="")
 
-      if (all(outData[,1] == outSampleData[,1]))
+      if (length(intersect(outData[,1], outSampleData[,1])) != nrow(outData))
       {
-        outData = cbind(outData, outSampleData[,2])
+        print(setdiff(outData[,1], outSampleData[,1]))
+        message(paste(inFilePath, " has at least one feature that differs from the other file(s). Features that do not overlap across the files will default to NA."))
       }
-      else {
-        warning(paste(inFilePath, " has different features than the previous file(s), so an attempt will be made to match by feature name. However, because there are duplicate feature names on these arrays, proceed with caution."), immediate. = TRUE)
-        outData = merge(outData, outSampleData, by=1, sort=FALSE)
-      }
+
+      outData = suppressWarnings(merge(outData, outSampleData, by=1, sort=FALSE, all=TRUE))
+
+      if (nrow(outData) == 0)
+        stop("After merging the data files, no features were common across all files.")
     }
   }
 
   colnames(outData) = basename(c("Feature", inFilePaths))
+  outData = outData[match(rowNamesFromFirstFile, outData[,1]),]
 
   if (!is.na(outFilePath))
   {

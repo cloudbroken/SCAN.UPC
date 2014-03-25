@@ -22,7 +22,7 @@ Description: SCAN is a microarray normalization method to facilitate
         for cross-platform data integration.
 License: MIT
 Depends: R (>= 2.14.0), Biobase (>= 2.6.0), oligo, Biostrings,
-        GEOquery, affy, affyio, foreach
+        GEOquery, affy, affyio, foreach, sva
 Suggests: pd.hg.u95a
 Imports: utils, methods, MASS, tools
 URL: http://bioconductor.org, http://jlab.bu.edu/software/scan-upc

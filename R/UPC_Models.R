@@ -11,10 +11,10 @@
 UPC_Generic = function(expressionValues, lengths=NULL, gcContent=NULL, modelType="nn", convThreshold=0.001, higherValuesIndicateHigherExpression=TRUE, verbose=TRUE)
 {
   if (is.null(lengths))
-    warning("No annotation information was present for length, so no correction will be made for this.")
+    message("No annotation information was present for length, so no correction will be made for this.")
 
   if (is.null(gcContent))
-    warning("No annotation information was present for GC content, so no correction will be made for this.")
+    message("No annotation information was present for GC content, so no correction will be made for this.")
 
   if (!(modelType%in%c("nn", "ln", "nb")))
     stop(paste("The specified modelType value (", modelType, ") is invalid. Must be nn, ln, or nb.", sep=""))

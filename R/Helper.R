@@ -194,3 +194,56 @@ ProcessGtfSubset = function(tmpFilePath, fastaStrings, chromosome, outFilePath, 
 
   write.table(outData, outFilePath, sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE, append=appendToOut)
 }
+
+BatchAdjust = function(data, batchFilePath)
+{
+  if (!file.exists(batchFilePath))
+  {
+    warning(paste("No batch file exists at ", batchFilePath, ".", sep=""))
+    return(data)
+  }
+
+  batchInfo = read.table(batchFilePath, sep="\t", header=TRUE, row.names=NULL, check.names=FALSE)
+  colnames(batchInfo) = tolower(colnames(batchInfo))
+
+  if (!("sample" %in% colnames(batchInfo)))
+  {
+    warning(paste("No 'sample' column exists in ", batchFilePath, ", so no batch adjustment will be made.", sep=""))
+    return(data)
+  }
+    
+  if (!("batch" %in% colnames(batchInfo)))
+  {
+    warning(paste("No 'batch' column exists in ", batchFilePath, ", so no batch adjustment will be made.", sep=""))
+    return(data)
+  }
+  
+  diffSamples = setdiff(colnames(data), batchInfo[,1])
+
+  if (length(diffSamples) > 0) # see if batch data missing for any samples
+  {
+    warning(paste("The batch information file (", batchFilePath, ") contains no batch information for the following samples: ", paste(diffSamples, collapse=", "), ". No batch adjustment will be made.", sep=""))
+    return(data)
+  }
+  
+  batchInfo = batchInfo[match(colnames(data), batchInfo[,1]),]
+  batch = batchInfo$batch
+
+  mod = NULL
+  modColumns = setdiff(colnames(batchInfo), c("sample", "batch")) # see if any columns specify covariate data
+
+  if (length(modColumns) > 0) # there is at least one covariate
+  {
+    modelMatrixCommand = paste("model.matrix(~", paste(modColumns, collapse=" + "), ", data=batchInfo)", sep="")
+
+    message(paste("Covariate(s) have been specified for batch adjustment. The data will be adjusted using the following model matrix: ", modelMatrixCommand, sep=""))
+    eval(parse(text=paste("mod = ", modelMatrixCommand, sep="")))
+  } else {
+    message("No batch covariates have been specified.")
+  }
+
+  message("Getting ready to perform batch adjustment.")
+  data = ComBat(data, batch=batch, mod=mod)
+  message("Done performing batch adjustment.")
+  return(data)
+}

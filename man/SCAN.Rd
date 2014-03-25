@@ -12,7 +12,7 @@
 }
 \usage{
 SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, exonArrayTarget=NA, verbose = TRUE)
+     probeLevelOutDirPath = NA, exonArrayTarget=NA, batchFilePath=NA, verbose = TRUE)
 SCANfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackageName = NA, probeSummaryPackage = NA,
      probeLevelOutDirPath = NA, exonArrayTarget=NA, verbose = TRUE)
 UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA, probeSummaryPackage = NA,
@@ -42,6 +42,9 @@ UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackag
   \item{exonArrayTarget}{
      The type of probes to be used. This parameter is optional and should only be specified when Affymetrix Exon 1.0 ST arrays are being processed. This parameter allows the user to specify the subset of probes that should be used and how the probes should be grouped. Available options are NA, "core", "extended", "full", or "probeset". When "probeset" is used, all probes will be used, and the probes will be grouped according to the Affymetrix probeset definitions. When "core", "extended", or "full" are used, the probes that Affymetrix has defined to fall within each classification will be used, and probes will be grouped by Entrez Gene IDs (as defined in the corresponding annotation package). It is recommended to specify "probeset" when the \emph{probeSummaryPackage} parameter is being used so that all probes will be considered.
 }
+  \item{batchFilePath}{
+     Absolute or relative path to a file where a text file containing batch information is stored.
+}
   \item{verbose}{
      Whether to output more detailed status information as files are normalized. Default is TRUE.
 }
@@ -63,7 +66,7 @@ If a Gene Expression Omnibus (GEO) identifier is specified for the \code{celFile
 
 By default, \code{SCAN} and \code{UPC} use the default mappings between probes and genes that have been provided by the manufacturer. However, these mappings may be outdated or may include problematic probes (for example, those that cross hybridize). The default mappings also may produce multiple summary values per gene. Alternative mappings, such as those provided by the BrainArray resource (see \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/genomic_curated_CDF.asp}), allow \code{SCAN} and \code{UPC} to produce a single value per gene and to use updated gene definitions. Users can specify alternative mappings using the \code{probeSummaryPackage} parameter. If specified, this package must conform to the standards of the \code{AnnotationDbi} package. The BrainArray packages can be downloaded from \url{http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/CDF_download.asp}. When using BrainArray, be sure to download the R source package for probe-level mappings (see vignette for more information).
 
-Because the SCAN/UPC algorithm accounts for nucleotide-level genomic composition across thousands of probes, it may take several minutes to normalize a sample, depending on the computer's processor speed and the type of microarray. To enable users to normalize samples in a shorter period of time, we have provided alternative functions called \code{SCANfast} and \code{UPCfast}. In this approach, a smaller number of probes is used for normalization, and a less stringent convergence threshold is used by default. We have found that microarrays processed with \code{SCANfast} (using default parameters) require 60\% less processing time but produce output values that correlate strongly (r = 0.998) with values produced by the \code{SCAN} function for the same arrays.
+Because the SCAN/UPC algorithm accounts for nucleotide-level genomic composition across thousands of probes, it may take several minutes to normalize a sample, depending on the computer's processor speed and the type of microarray. To enable users to normalize samples in a shorter period of time, we have provided alternative functions called \code{SCANfast} and \code{UPCfast}. In this approach, a smaller number of probes is used for normalization, and a less stringent convergence threshold is used by default. We have found that microarrays processed with \code{SCANfast} (using default parameters) require 75\% less processing time (on average) but produce output values that correlate strongly (r = 0.998) with values produced by the \code{SCAN} function for the same arrays.
 
 It is also possible to execute these functions in parallel. This approach uses the \code{foreach} package behind the scenes. If you have registered a parallel backend (for example, via the \code{doParallel} package), multiple CEL files can be processed in parallel. Otherwise, the files will be processed sequentially.
 }
