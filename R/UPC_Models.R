@@ -8,40 +8,105 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
+UPC_Generic_ExpressionSet = function(expressionSet, sequenceFeatureName=NA, modelType="nn", convThreshold=0.001, higherValuesIndicateHigherExpression=TRUE, verbose=TRUE)
+{
+  data = exprs(expressionSet)
+  meta = pData(featureData(expressionSet))
+
+  gcContent = NULL
+  lengths = NULL
+
+  if (!is.na(sequenceFeatureName) & (sequenceFeatureName %in% colnames(meta)))
+  {
+    message(paste("Extracting sequence information from meta column", sequenceFeatureName))
+    sequences = as.character(meta[,sequenceFeatureName])
+
+    keep = which(sequences != "")
+    data = data[keep,]
+    meta = meta[keep,]
+    sequences = sequences[keep]
+
+    sequencesSet = DNAStringSet(sequences)
+    gcCount = apply(letterFrequency(sequencesSet, letters=c("C", "G")), 1, sum)
+    lengths = width(sequencesSet)
+    gcContent = gcCount / lengths
+
+    if (length(unique(lengths)) == 1)
+      lengths = NULL # No point in correcting for length if all are the same
+  }
+
+  upcData = apply(data, 2, function(x) {
+    UPC_Generic(x, lengths=lengths, gcContent=gcContent, modelType=modelType, convThreshold=convThreshold, higherValuesIndicateHigherExpression=higherValuesIndicateHigherExpression, verbose=verbose)
+  })
+
+  rownames(upcData) = featureNames(expressionSet)
+  exprs(expressionSet) = upcData
+
+  return(expressionSet)
+}
+
 UPC_Generic = function(expressionValues, lengths=NULL, gcContent=NULL, modelType="nn", convThreshold=0.001, higherValuesIndicateHigherExpression=TRUE, verbose=TRUE)
 {
+  if (!(modelType%in%c("nn", "nn_bayes", "ln", "nb")))
+    stop(paste("The specified modelType value (", modelType, ") is invalid. Must be nn, nn_bayes, ln, or nb.", sep=""))
+
   if (is.null(lengths))
-    message("No annotation information was present for length, so no correction will be made for this.")
+    if (verbose)
+      message("No annotation information was present for length, so no correction will be made for this.")
 
   if (is.null(gcContent))
-    message("No annotation information was present for GC content, so no correction will be made for this.")
-
-  if (!(modelType%in%c("nn", "ln", "nb")))
-    stop(paste("The specified modelType value (", modelType, ") is invalid. Must be nn, ln, or nb.", sep=""))
+    if (verbose)
+      message("No annotation information was present for GC content, so no correction will be made for this.")
 
   if (!is.null(lengths))
   {
+    if (any(is.na(lengths)))
+    {
+      warning("Could not adjust for length because at least one NA value was present.")
+    } else {
+      if (length(unique(lengths))==1)
+      {
+        warning("Could not adjust for length because all values were the same.")
+      }
+    }
+
     if (length(lengths) != length(expressionValues))
       stop(paste("The size of expressionValues (", length(expressionValues), ") is not identical to the size of lengths (", length(lengths), ")", sep=""))
 
-    lengths = log2(lengths)
+    if (all(lengths > 0))
+      lengths = log2(lengths)
   }
 
   if (!is.null(gcContent))
   {
+    if (any(is.na(gcContent)))
+    {
+      warning("Could not adjust for GC content because at least one NA value was present.")
+    } else {
+      if (length(unique(gcContent))==1)
+      {
+        warning("Could not adjust for GC content because all values were the same.")
+      }
+    }
+
     if (length(gcContent) != length(expressionValues))
       stop(paste("The size of expressionValues (", length(expressionValues), ") is not identical to the size of gcContent (", length(gcContent), ")", sep=""))
   }
 
-  # Subtract the minimum so there are no negative values, which causes a problem when you do a log transformation
-  # Add 2 so there are no zero values
-  # Log transform to make model derivation easier
-  expressionValues = log2(expressionValues - min(expressionValues) + 2)
+  # Check to see if the data have not already been log transformed. If they haven't, then log transform the data.
+  if ((max(expressionValues) - min(expressionValues)) > 50)
+    expressionValues = log2(expressionValues - min(expressionValues) + 2)
 
   if (modelType == "nn")
   {
     message("Calculating UPC values using the normal-normal model.")
     upcs = UPC_nn(expressionValues, l=lengths, gc=gcContent, conv=convThreshold)
+  }
+
+  if (modelType == "nn_bayes")
+  {
+    message("Calculating UPC values using the normal-normal Bayesian model.")
+    upcs = UPC_nn_bayes(expressionValues, l=lengths, gc=gcContent, conv=convThreshold)
   }
 
   if (modelType == "ln")
@@ -120,6 +185,10 @@ UPC_nn = function(y, l=NULL, gc=NULL, conv=0.001, q=1) {
      
       #E-step
       gamma <- (pi_h*dnorm(y1,cbind(1,1,X[,-1])%*%beta,sqrt(sigma2_1)))/(pi_h*dnorm(y1,cbind(1,1,X[,-1])%*%beta,sqrt(sigma2_1))+(1-pi_h)*dnorm(y1,cbind(1,0,X[,-1])%*%beta,sqrt(sigma2_2)))
+
+      # Occasionally a NaN gamma value will be returned. We set these to zero by default.
+      gamma[is.nan(gamma)] = 0
+
       x=cbind(1,gamma,X[,-1])
      
       #M-step
@@ -157,6 +226,122 @@ UPC_nn = function(y, l=NULL, gc=NULL, conv=0.001, q=1) {
   }
 
   y.sim=rnorm(length(y),x%*%beta,sqrt(sigma2_1))
+  #par(mfrow=c(2,1))
+  #hist(y,breaks=250, xlim=c(0,30))
+  #hist(y.sim,breaks=250,col=2, xlim=c(0,30))
+
+  return(probs)
+}
+
+UPC_nn_bayes = function(y, l=NULL, gc=NULL, conv=0.001, q=1, empirical=T, lambda=1, exprProp=0.4, k=1) {
+  groups = rep(1, length(y))
+  probs = numeric(length(y))
+
+  for (j in unique(groups)){
+    use = (groups==j)
+
+    if (is.null(l) && is.null(gc)) {
+      X = matrix(1, nrow=length(y[use]), ncol=1)
+    }
+    if (is.null(l) && !is.null(gc)) {
+      X = 1.*cbind(matrix(1, nrow=length(y), ncol=1), gc)[use,]
+    }
+    if (!is.null(l) && is.null(gc)) {
+      X = 1.*cbind(matrix(1, nrow=length(y), ncol=1), l, l^2)[use,]
+    }
+    if (!is.null(l) && !is.null(gc)) {
+      X = 1.*cbind(matrix(1, nrow=length(y), ncol=1), l, l^2, gc)[use,]
+    }
+
+    y1=y[use]
+
+    #pi_h=.5
+    
+    n_total <- length(y1)  #
+    beta_a <- n_total*0.1*exprProp; beta_b <- n_total*0.1*(1-exprProp)  #
+    pi_h= beta_a/(beta_a+beta_b) #
+    
+    x_1=cbind(X[y1>median(y1),])
+    beta_1=solve(t(x_1)%*%x_1)%*%t(x_1)%*%y1[y1>median(y1)]
+    sigma2_1=var(y1[y1>median(y1)])
+
+    x_2=cbind(X[y1<=median(y1),])
+    beta_2=solve(t(x_2)%*%x_2)%*%t(x_2)%*%y1[y1<=median(y1)]
+    sigma2_2=var(y1[y1<=median(y1)])
+    
+    # prior covariance of beta1 and beta2
+    if (empirical==T){
+      cov_beta <- sigma2_1 * solve(t(x_1)%*%x_1) * n_total/k 
+      cov_beta_inv <- solve(cov_beta)      
+    } else {
+      cov_beta_inv <- diag(rep(lambda,NCOL(X)))
+    }
+ 
+    theta=c(pi_h,beta_1,beta_2)
+    thetaold=theta+1000
+    i<- 0
+
+    gamma=1.*(y1>median(y1))
+    #x=cbind(1,gamma,X[,-1])
+    #beta=solve(t(x)%*%(x))%*%t(x)%*%y1
+
+    #while(max(abs((theta-thetaold)/thetaold))>conv)
+    while(max(abs(theta/thetaold-1))>conv)
+    {
+      thetaold=theta 
+     
+      #E-step
+      #gamma <- (pi_h*dnorm(y1,cbind(1,1,X[,-1])%*%beta,sqrt(sigma2_1)))/(pi_h*dnorm(y1,cbind(1,1,X[,-1])%*%beta,sqrt(sigma2_1))+(1-pi_h)*dnorm(y1,cbind(1,0,X[,-1])%*%beta,sqrt(sigma2_2)))
+      b_div_a <- (1-pi_h)/pi_h * sqrt(sigma2_2/sigma2_1) * exp(-1/2*((y1-as.numeric(X%*%beta_1))^2/sigma2_1 - (y1-as.numeric(X%*%beta_2))^2/sigma2_2))
+      gamma <- as.numeric(1/(1+b_div_a))
+      
+      # Occasionally a NaN gamma value will be returned. We set these to zero by default.
+      gamma[is.nan(gamma)] = 0
+
+      x=cbind(1,gamma,X[,-1])
+     
+      #M-step
+      #beta=solve(t(x)%*%(x))%*%t(x)%*%y1
+      #sigma2_1  <- sigma2_2 <- sum((y1-x%*%beta)^2)/length(y1)
+     
+      beta_1 <- solve(t(X)%*%diag(1-gamma)%*%X+as.numeric(sigma2_1)*cov_beta_inv) %*% t(X)%*%diag(1-gamma)%*%y1
+      beta_2 <- solve(t(X)%*%diag(gamma)%*%X+as.numeric(sigma2_2)*cov_beta_inv) %*% t(X)%*%diag(gamma)%*%y1
+      sigma2_1 <- (t(y1-X%*%beta_1) %*% (diag(1-gamma)) %*% (y1-X%*%beta_1)) / sum((1-gamma))
+      sigma2_2 <- (t(y1-X%*%beta_2) %*% (diag(gamma)) %*% (y1-X%*%beta_2)) / sum(gamma)
+      
+      #pi_h <- mean(gamma)
+      pi_h <- (beta_a + sum(gamma)) / (n_total+beta_a+beta_b)
+      
+      #theta=c(pi_h,beta_1,beta_2)
+      theta=c(pi_h, beta_1, beta_2)
+      
+      i <- i+1
+      message(paste("Iteration", i))
+      message(max(abs((theta-thetaold)/thetaold)))
+
+      # Abort if most values are to one extreme
+      if (sum(x[,2] > 0.99) > nrow(x) * 0.99)
+      {
+        warning("Most values were close to 1.0, so stopping. Perhaps try with a higher convergence threshold.")
+        break
+      }
+      if (sum(x[,2] < 0.01) > nrow(x) * 0.99)
+      {
+        warning("Most values were close to 0.0, so stopping. Perhaps try with a higher convergence threshold.")
+        break
+      }
+
+      if (i == 100)
+      {
+        message("Stopped at 100 iterations")
+        break
+      }
+    }
+
+    probs[use]=gamma
+  }
+
+  #y.sim=rnorm(length(y),x%*%beta,sqrt(sigma2_1))
   #par(mfrow=c(2,1))
   #hist(y,breaks=250, xlim=c(0,30))
   #hist(y.sim,breaks=250,col=2, xlim=c(0,30))

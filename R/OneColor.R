@@ -10,34 +10,69 @@
 
 SCAN = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, batchFilePath=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, batchFilePath=batchFilePath, verbose=verbose))
+  return(SCANprivate(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=50000, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, exonArrayTarget=exonArrayTarget, batchFilePath=batchFilePath, verbose=verbose))
 }
 
-SCANfast = function(celFilePattern, outFilePath=NA, convThreshold=0.50, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
+SCANfast = function(celFilePattern, outFilePath=NA, convThreshold=0.50, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, batchFilePath=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=10000, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+  return(SCANprivate(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=10000, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, exonArrayTarget=exonArrayTarget, batchFilePath=batchFilePath, verbose=verbose))
 }
 
-UPC = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
+SCANprivate = function(celFilePattern, outFilePath=NA, intervalN=50000, convThreshold=0.50, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, batchFilePath=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+  if (is.na(batchFilePath))
+    return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=intervalN, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+
+  expressionSet = processCelFiles(celFilePattern=celFilePattern, outFilePath=NA, intervalN=intervalN,convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose)
+  expressionSet = BatchAdjustFromFile(expressionSet, batchFilePath)
+
+  if (!is.na(outFilePath))
+    write.table(round(exprs(expressionSet), 8), outFilePath, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)
+
+  return(expressionSet)
 }
 
-UPCfast = function(celFilePattern, outFilePath=NA, convThreshold=0.50, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
+UPC = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, modelType="nn", batchFilePath=NA, verbose=TRUE)
 {
-  return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=10000, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+  return(UPCprivate(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=50000, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, exonArrayTarget=exonArrayTarget, modelType=modelType, batchFilePath=batchFilePath, verbose=verbose))
 }
 
-UPC2 = function(celFilePattern, outFilePath=NA, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, verbose=TRUE)
+UPCfast = function(celFilePattern, outFilePath=NA, convThreshold=0.50, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, modelType="nn", batchFilePath=NA, verbose=TRUE)
 {
-  scanMatrix = exprs(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose))
-  upcMatrix = apply(scanMatrix, 2, UPC_Generic)
-  rownames(upcMatrix) = rownames(scanMatrix)
-
-  return(ExpressionSet(upcMatrix))
+  return(UPCprivate(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=10000, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, exonArrayTarget=exonArrayTarget, modelType=modelType, batchFilePath=batchFilePath, verbose=verbose))
 }
 
-processCelFiles = function(celFilePattern, outFilePath=NA, intervalN=50000, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, exonArrayTarget=NA, batchFilePath=NA, verbose=TRUE)
+UPCprivate = function(celFilePattern, outFilePath=NA, intervalN=50000, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, exonArrayTarget=NA, modelType="nn", batchFilePath=NA, verbose=TRUE)
+{
+  if (!(modelType %in% c("nn", "nn2", "nn_bayes")))
+    stop("The modelType parameter must be nn, nn2, or nn_bayes.")
+
+  # Use the traditional UPC approach for Affymetrix arrays?
+  if (is.na(batchFilePath) && modelType != "nn_bayes" && modelType != "nn2")
+    return(processCelFiles(celFilePattern=celFilePattern, outFilePath=outFilePath, intervalN=intervalN, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=TRUE, exonArrayTarget=exonArrayTarget, verbose=verbose))
+
+  # nn2 means that we want to do SCAN => UPC_Generic normal-normal UPC rather than the microarray version of normal-normal UPC
+  if (modelType == "nn2")
+    modelType = "nn"
+
+  # SCAN normalize the data, don't save to file
+  expressionSet = processCelFiles(celFilePattern=celFilePattern, outFilePath=NA, intervalN=intervalN, convThreshold=convThreshold, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, probeLevelOutDirPath=probeLevelOutDirPath, UPC=FALSE, exonArrayTarget=exonArrayTarget, verbose=verbose)
+
+  # Adjust for batch
+  if (!is.na(batchFilePath))
+    expressionSet = BatchAdjustFromFile(expressionSet, batchFilePath)
+
+  # UPC transform using generic model
+  expressionSet = UPC_Generic_ExpressionSet(expressionSet, modelType=modelType, convThreshold=convThreshold, verbose=verbose)
+
+  # Save to a file if needed
+  if (!is.na(outFilePath))
+    write.table(round(exprs(expressionSet), 8), outFilePath, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)
+
+  return(expressionSet)
+}
+
+processCelFiles = function(celFilePattern, outFilePath=NA, intervalN=50000, convThreshold=0.01, annotationPackageName=NA, probeSummaryPackage=NA, probeLevelOutDirPath=NA, UPC=FALSE, exonArrayTarget=NA, verbose=TRUE)
 {
   if (convThreshold >= 1)
     stop("The convThreshold value must be lower than 1.0.")
@@ -88,16 +123,17 @@ processCelFiles = function(celFilePattern, outFilePath=NA, intervalN=50000, conv
   if (is.null(summarized))
     return(ExpressionSet())
 
-  if (!is.na(batchFilePath))
-    summarized = BatchAdjust(summarized, batchFilePath)
-
   if (!is.na(outFilePath))
   {
     write.table(round(summarized, 8), outFilePath, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)
     message("Saved output to ", outFilePath, sep="")
   }
 
-  return(ExpressionSet(as.matrix(summarized)))
+  expressionSet = ExpressionSet(as.matrix(summarized))
+  sampleNames(expressionSet) = colnames(summarized)
+  featureNames(expressionSet) = rownames(summarized)
+
+  return(expressionSet)
 }
 
 createOutputDir = function(dirPath, verbose=TRUE)
@@ -177,12 +213,6 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
     my = log2(pint)
     nGroups = length(my) / binsize
     samplingProbeIndices = getSampleIndices(total=length(pint), intervalN=intervalN, verbose=verbose)
-
-###yFilePath = sub("\\.CEL.gz", "_y.txt", celFilePath)
-###xFilePath = sub("\\.CEL.gz", "_X.txt", celFilePath)
-###write.table(my[samplingProbeIndices], yFilePath, row.names=F, col.names=F, quote=F)
-###write.table(mx[samplingProbeIndices,], xFilePath, row.names=F, col.names=F, quote=F, sep="\t")
-###stop()
 
     mixResult = EM_vMix(y=my[samplingProbeIndices], X=mx[samplingProbeIndices,], nbins=nbins, convThreshold=convThreshold, verbose=verbose, demo=length(grep("Vignette_Example", basename(celFilePath))) > 0)
 
@@ -431,104 +461,104 @@ sig = function(y, m, verbose=TRUE)
   sqrt((resid %*% resid) / length(y))
 }
 
-EM_vMix_bayes = function(y, X, nbins, convThreshold=.01, verbose=TRUE, maxIt=100, demo=FALSE,empirical=T, lambda=1, exprProp=0.4, k=1)
-{
-  if (verbose)
-    message("Starting EM")
-  
-  quan = sort(y)[floor(0.5 * length(y)) - 1]
-  gam <<- cbind(as.integer(y <= quan), as.integer(y > quan))
-  
-  p = apply(gam, 2, mean)
-  
-  b1 = mybeta(y=y, X=X, gam=gam[,1], verbose=verbose)
-  X1 = X[y <= quan,] #
-  b2 = mybeta(y=y, X=X, gam=gam[,2], verbose=verbose)
-  X2 = X[y > quan, ]  #
-  bin = assign_bin(y=y, nbins=nbins, verbose=verbose)
-  s1 = vsig(y=y, X=X, b=b1, gam=gam[,1], bin=bin, nbins=nbins, verbose=verbose)
-  s2 = vsig(y=y, X=X, b=b2, gam=gam[,1], bin=bin, nbins=nbins, verbose=verbose)
-  
-  n_total <- length(y)  #
-  beta_a <- n_total*0.1*exprProp; beta_b <- n_total*0.1*(1-exprProp)  #
-  
-  # prior covariance of beta1 and beta2
-  if (empirical==T){
-    cov_beta <- s2[bin] * solve(t(X1)%*%X1) * n_total/k 
-    cov_beta_inv <- solve(cov_beta)
-    #print(cov_beta_inv)
-    
-  } else {
-    cov_beta_inv <- diag(rep(lambda,NCOL(X)))
-  }
-  
-  theta_old=c(p, b1, s1, b2, s2)
-  
-  it = 0
-  conv = 1
- 
-  while (conv > convThreshold & it < maxIt)
-  {
-    # Expectation Step:
-    gam = vresp(y=y, X=X, bin=bin, p=p, b1=b1, s1=s1, b2=b2, s2=s2, verbose=verbose)
-    
-    #M-Step
-    #p = apply(gam, 2, mean)
-    p = (beta_a + colSums(gam[,2])) / (n_total+beta_a+beta_b) #
-    
-    b1 = vbeta_bayes(y=y, X=X, bin=bin, gam=gam[,1], s2=s1, prof=TRUE, verbose=verbose) #
-    bin = assign_bin(y=(X %*% b1), nbins=nbins, verbose=verbose)
-    b2 = vbeta_bayes(y=y, X=X, bin=bin, gam=gam[,2], s2=s2, prof=FALSE, verbose=verbose)  #
-    s1 = vsig(y=y, X=X, b=b1, gam=gam[,1], bin=bin, nbins=nbins, verbose=verbose)
-    s2 = vsig(y=y, X=X, b=b2, gam=gam[,2], bin=bin, nbins=nbins, verbose=verbose)
-    
-    theta = c(p, b1, s1, b2, s2)
-    conv = max(abs(theta - theta_old) / theta_old)
-    theta_old = theta
-    it = it + 1
-    
-    if (verbose)
-      message("Attempting to converge...iteration ", it, ", c = ", round(conv, 6))
-    
-    if (demo & (it == 3))
-      break
-  }
-  
-  if (verbose)
-  {
-    if (demo)
-    {
-      message("Convergence process halted early while in demo mode.")
-    } else
-    {
-      if (it == maxIt)
-      {
-        message("Reached convergence limit...", it, " iterations. Proportion of background probes: ", round(p[1], 6))
-      } else {
-        message("Converged in ", it, " iterations. Proportion of background probes: ", round(p[1], 6))
-      }
-    }
-  }
-  
-  list(p=p, b1=b1, b2=b2, s1=s1, s2=s2, bin=bin)
-}
-
-vbeta_bayes = function(y, X, bin, gam, s2, prof, verbose=TRUE,cov_beta_inv)
-{
-  vars = sqrt(s2[bin]) ##?why sqrt? s2 is a variance vector with nbin number of elements (need to confirm with Steve)
-  sqgam = sqrt(gam)
-  vars_sqgam = vars * sqgam
-  
-  Xw = 1 / vars * sqgam * X # ??
-  yw = 1 / vars * sqgam * y
-  
-  #   tXw = t(Xw)
-  #   tXwXw = tXw %*% Xw
-  #   stXwXw = solve(tXwXw)
-  #   stXwXwtXw = stXwXw %*% tXw
-  #   result = stXwXwtXw %*% yw
-  
-  result = solve(t(Xw)%*%diag(gam)%*%X+s2[bin]*cov_beta_inv) %*% t(Xw)%*%diag(gam)%*%y
-  
-  result
-}
+#EM_vMix_bayes = function(y, X, nbins, convThreshold=.01, verbose=TRUE, maxIt=100, demo=FALSE,empirical=T, lambda=1, exprProp=0.4, k=1)
+#{
+#  if (verbose)
+#    message("Starting EM")
+#  
+#  quan = sort(y)[floor(0.5 * length(y)) - 1]
+#  gam <<- cbind(as.integer(y <= quan), as.integer(y > quan))
+#  
+#  p = apply(gam, 2, mean)
+#  
+#  b1 = mybeta(y=y, X=X, gam=gam[,1], verbose=verbose)
+#  X1 = X[y <= quan,] #
+#  b2 = mybeta(y=y, X=X, gam=gam[,2], verbose=verbose)
+#  X2 = X[y > quan, ]  #
+#  bin = assign_bin(y=y, nbins=nbins, verbose=verbose)
+#  s1 = vsig(y=y, X=X, b=b1, gam=gam[,1], bin=bin, nbins=nbins, verbose=verbose)
+#  s2 = vsig(y=y, X=X, b=b2, gam=gam[,1], bin=bin, nbins=nbins, verbose=verbose)
+#  
+#  n_total <- length(y)  #
+#  beta_a <- n_total*0.1*exprProp; beta_b <- n_total*0.1*(1-exprProp)  #
+#  
+#  # prior covariance of beta1 and beta2
+#  if (empirical==T){
+#    cov_beta <- s2[bin] * solve(t(X1)%*%X1) * n_total/k 
+#    cov_beta_inv <- solve(cov_beta)
+#    #print(cov_beta_inv)
+#    
+#  } else {
+#    cov_beta_inv <- diag(rep(lambda,NCOL(X)))
+#  }
+#  
+#  theta_old=c(p, b1, s1, b2, s2)
+#  
+#  it = 0
+#  conv = 1
+# 
+#  while (conv > convThreshold & it < maxIt)
+#  {
+#    # Expectation Step:
+#    gam = vresp(y=y, X=X, bin=bin, p=p, b1=b1, s1=s1, b2=b2, s2=s2, verbose=verbose)
+#    
+#    #M-Step
+#    #p = apply(gam, 2, mean)
+#    p = (beta_a + colSums(gam[,2])) / (n_total+beta_a+beta_b) #
+#    
+#    b1 = vbeta_bayes(y=y, X=X, bin=bin, gam=gam[,1], s2=s1, prof=TRUE, verbose=verbose) #
+#    bin = assign_bin(y=(X %*% b1), nbins=nbins, verbose=verbose)
+#    b2 = vbeta_bayes(y=y, X=X, bin=bin, gam=gam[,2], s2=s2, prof=FALSE, verbose=verbose)  #
+#    s1 = vsig(y=y, X=X, b=b1, gam=gam[,1], bin=bin, nbins=nbins, verbose=verbose)
+#    s2 = vsig(y=y, X=X, b=b2, gam=gam[,2], bin=bin, nbins=nbins, verbose=verbose)
+#    
+#    theta = c(p, b1, s1, b2, s2)
+#    conv = max(abs(theta - theta_old) / theta_old)
+#    theta_old = theta
+#    it = it + 1
+#    
+#    if (verbose)
+#      message("Attempting to converge...iteration ", it, ", c = ", round(conv, 6))
+#    
+#    if (demo & (it == 3))
+#      break
+#  }
+#  
+#  if (verbose)
+#  {
+#    if (demo)
+#    {
+#      message("Convergence process halted early while in demo mode.")
+#    } else
+#    {
+#      if (it == maxIt)
+#      {
+#        message("Reached convergence limit...", it, " iterations. Proportion of background probes: ", round(p[1], 6))
+#      } else {
+#        message("Converged in ", it, " iterations. Proportion of background probes: ", round(p[1], 6))
+#      }
+#    }
+#  }
+#  
+#  list(p=p, b1=b1, b2=b2, s1=s1, s2=s2, bin=bin)
+#}
+#
+#vbeta_bayes = function(y, X, bin, gam, s2, prof, verbose=TRUE,cov_beta_inv)
+#{
+#  vars = sqrt(s2[bin]) ##?why sqrt? s2 is a variance vector with nbin number of elements (need to confirm with Steve)
+#  sqgam = sqrt(gam)
+#  vars_sqgam = vars * sqgam
+#  
+#  Xw = 1 / vars * sqgam * X # ??
+#  yw = 1 / vars * sqgam * y
+#  
+#  #   tXw = t(Xw)
+#  #   tXwXw = tXw %*% Xw
+#  #   stXwXw = solve(tXwXw)
+#  #   stXwXwtXw = stXwXw %*% tXw
+#  #   result = stXwXwtXw %*% yw
+#  
+#  result = solve(t(Xw)%*%diag(gam)%*%X+s2[bin]*cov_beta_inv) %*% t(Xw)%*%diag(gam)%*%y
+#  
+#  result
+#}

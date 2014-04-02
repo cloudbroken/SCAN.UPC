@@ -14,11 +14,11 @@
 SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA, probeSummaryPackage = NA,
      probeLevelOutDirPath = NA, exonArrayTarget=NA, batchFilePath=NA, verbose = TRUE)
 SCANfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackageName = NA, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, exonArrayTarget=NA, verbose = TRUE)
+     probeLevelOutDirPath = NA, exonArrayTarget=NA, batchFilePath=NA, verbose = TRUE)
 UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, exonArrayTarget = NA, verbose = TRUE)
+     probeLevelOutDirPath = NA, exonArrayTarget = NA, modelType="nn", batchFilePath=NA, verbose = TRUE)
 UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackageName = NA, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, exonArrayTarget = NA, verbose = TRUE)
+     probeLevelOutDirPath = NA, exonArrayTarget = NA, modelType="nn", batchFilePath=NA, verbose = TRUE)
 }
 \arguments{
   \item{celFilePattern}{
@@ -41,6 +41,9 @@ UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackag
 }
   \item{exonArrayTarget}{
      The type of probes to be used. This parameter is optional and should only be specified when Affymetrix Exon 1.0 ST arrays are being processed. This parameter allows the user to specify the subset of probes that should be used and how the probes should be grouped. Available options are NA, "core", "extended", "full", or "probeset". When "probeset" is used, all probes will be used, and the probes will be grouped according to the Affymetrix probeset definitions. When "core", "extended", or "full" are used, the probes that Affymetrix has defined to fall within each classification will be used, and probes will be grouped by Entrez Gene IDs (as defined in the corresponding annotation package). It is recommended to specify "probeset" when the \emph{probeSummaryPackage} parameter is being used so that all probes will be considered.
+}
+  \item{modelType}{
+    TBD
 }
   \item{batchFilePath}{
      Absolute or relative path to a file where a text file containing batch information is stored.

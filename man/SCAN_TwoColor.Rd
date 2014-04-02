@@ -7,7 +7,7 @@
   This function is used to normalize Agilent two-color expression microarrays via the SCAN method.
 }
 \usage{
-SCAN_TwoColor(inFilePattern, outFilePath = NA, verbose = TRUE)
+SCAN_TwoColor(inFilePattern, outFilePath = NA, batchFilePath = NA, verbose = TRUE)
 }
 \arguments{
   \item{inFilePattern}{
@@ -15,6 +15,9 @@ SCAN_TwoColor(inFilePattern, outFilePath = NA, verbose = TRUE)
 }
   \item{outFilePath}{
      Absolute or relative path where the output file will be saved. This is optional.
+}
+  \item{batchFilePath}{
+     TBD
 }
   \item{verbose}{
      Whether to output more detailed status information as files are normalized. Default is TRUE.

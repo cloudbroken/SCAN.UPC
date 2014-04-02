@@ -8,7 +8,7 @@
   This function is used to normalize two-channel expression microarrays (from Agilent) using the Universal exPression Codes (UPC) approach. In raw form, such microarray data come in the form of tab-separate data files.
 }
 \usage{
-UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01, verbose = TRUE)
+UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01, batchFilePath = NA, verbose = TRUE)
 }
 \arguments{
   \item{inFilePattern}{
@@ -22,6 +22,9 @@ UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01
 }
   \item{convThreshold}{
      Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge, it may be useful to adjust this value. (This parameter is optional.)
+}
+  \item{batchFilePath}{
+     TBD
 }
   \item{verbose}{
      Whether to output more detailed status information as files are processed. Default is TRUE.

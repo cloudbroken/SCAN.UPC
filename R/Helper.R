@@ -30,7 +30,7 @@ downloadFromGEO = function(inFilePattern)
     individualDir = file.path(tmpDir, inFilePattern, "Files", sep="")
     dir.create(individualDir, recursive=TRUE)
     untar(tarFilePath, exdir=individualDir)
-    inFilePattern = file.path(individualDir, "*", sep="")
+    inFilePattern = file.path(individualDir, "GSM*", sep="")
   }
 
   if (substr(inFilePattern, 1, 3) == "GSM")
@@ -195,46 +195,17 @@ ProcessGtfSubset = function(tmpFilePath, fastaStrings, chromosome, outFilePath, 
   write.table(outData, outFilePath, sep="\t", row.names=FALSE, col.names=FALSE, quote=FALSE, append=appendToOut)
 }
 
-BatchAdjust = function(data, batchFilePath)
+BatchAdjust = function(expressionSet, batchVariableName, covariateVariableNames=c())
 {
-  if (!file.exists(batchFilePath))
-  {
-    warning(paste("No batch file exists at ", batchFilePath, ".", sep=""))
-    return(data)
-  }
-
-  batchInfo = read.table(batchFilePath, sep="\t", header=TRUE, row.names=NULL, check.names=FALSE)
-  colnames(batchInfo) = tolower(colnames(batchInfo))
-
-  if (!("sample" %in% colnames(batchInfo)))
-  {
-    warning(paste("No 'sample' column exists in ", batchFilePath, ", so no batch adjustment will be made.", sep=""))
-    return(data)
-  }
-    
-  if (!("batch" %in% colnames(batchInfo)))
-  {
-    warning(paste("No 'batch' column exists in ", batchFilePath, ", so no batch adjustment will be made.", sep=""))
-    return(data)
-  }
-  
-  diffSamples = setdiff(colnames(data), batchInfo[,1])
-
-  if (length(diffSamples) > 0) # see if batch data missing for any samples
-  {
-    warning(paste("The batch information file (", batchFilePath, ") contains no batch information for the following samples: ", paste(diffSamples, collapse=", "), ". No batch adjustment will be made.", sep=""))
-    return(data)
-  }
-  
-  batchInfo = batchInfo[match(colnames(data), batchInfo[,1]),]
-  batch = batchInfo$batch
+  for (variableName in c(batchVariableName, covariateVariableNames))
+    if (!(variableName %in% varLabels(expressionSet)))
+      stop(paste("No ", variableName, " variable exists in the phenotype data, so no batch adjustment can be performed.", sep=""))
 
   mod = NULL
-  modColumns = setdiff(colnames(batchInfo), c("sample", "batch")) # see if any columns specify covariate data
 
-  if (length(modColumns) > 0) # there is at least one covariate
+  if (length(covariateVariableNames) > 0)
   {
-    modelMatrixCommand = paste("model.matrix(~", paste(modColumns, collapse=" + "), ", data=batchInfo)", sep="")
+    modelMatrixCommand = paste("model.matrix(~", paste(covariateVariableNames, collapse=" + "), ", data=pData(expressionSet))", sep="")
 
     message(paste("Covariate(s) have been specified for batch adjustment. The data will be adjusted using the following model matrix: ", modelMatrixCommand, sep=""))
     eval(parse(text=paste("mod = ", modelMatrixCommand, sep="")))
@@ -243,7 +214,87 @@ BatchAdjust = function(data, batchFilePath)
   }
 
   message("Getting ready to perform batch adjustment.")
-  data = ComBat(data, batch=batch, mod=mod)
+  exprs(expressionSet) = ComBat(exprs(expressionSet), batch=pData(expressionSet)[,batchVariableName], mod=mod)
   message("Done performing batch adjustment.")
-  return(data)
+
+  return(expressionSet)
+}
+
+BatchAdjustFromFile = function(expressionSet, batchFilePath)
+{
+  if (class(expressionSet) != "ExpressionSet")
+    stop("The object is not an expressionSet.")
+
+  if (!file.exists(batchFilePath))
+  {
+    warning(paste("No file exists at ", batchFilePath, ".", sep=""))
+    return(expressionSet)
+  }
+
+  covariateData = read.table(batchFilePath, sep="\t", header=TRUE, row.names=NULL, check.names=FALSE)
+  rownames(covariateData) = covariateData[,1]
+
+  if (length(intersect(covariateData[,1], sampleNames(expressionSet))) != ncol(expressionSet))
+    stop(paste("For one or more of the sampleIDs in the ExpressionSet object, there was no covariate information in ", batchFilePath, ".", sep=""))
+
+  covariateData = covariateData[sampleNames(expressionSet), ]
+
+  covariateNames = colnames(covariateData)[-1]
+  newPhenotypeData = cbind(pData(expressionSet), covariateData[,-1])
+  colnames(newPhenotypeData) = c(varLabels(expressionSet), covariateNames)
+
+  pData(expressionSet) = newPhenotypeData
+
+  return(BatchAdjust(expressionSet, batchVariableName=covariateNames[1], covariateVariableNames=covariateNames[-1]))
+}
+
+readFilesIntoMatrix = function(inFilePattern, numHeaderRows=0)
+{
+  inFilePaths = list.files(path=dirname(inFilePattern), pattern=glob2rx(basename(inFilePattern)), full.names=TRUE)
+
+  if (length(inFilePaths) == 0)
+    stop("No data files that match the pattern ", inFilePattern, " could be located.")
+
+  header = FALSE
+  if (numHeaderRows == 1)
+  {
+    header = TRUE
+    numHeaderRows = numHeaderRows - 1
+  }
+
+  matrixData = NULL
+
+  for (inFilePath in inFilePaths)
+  {
+    message(paste("Reading ", inFilePath, " into a matrix.", sep=""))
+    inFileData = as.matrix(read.table(inFilePath, sep="\t", header=header, stringsAsFactors=FALSE, row.names=1, quote="\"", check.names=FALSE, skip=numHeaderRows))
+
+    if (ncol(inFileData) == 1)
+    {
+      newColumnNames = basename(inFilePath)
+    } else {
+      if (header)
+      {
+        newColumnNames = colnames(inFileData)
+      } else {
+        newColumnNames = paste(basename(inFilePath), "_Sample_", 1:ncol(inFileData), sep="")
+      }
+    }
+
+    if (is.null(matrixData))
+    {
+      previousColumnNames = NULL
+      matrixData = inFileData
+    } else {
+      previousColumnNames = colnames(matrixData)
+
+      matrixData = suppressWarnings(merge(matrixData, inFileData, by=0, sort=FALSE, all=TRUE))
+      rownames(matrixData) = matrixData[,1]
+      matrixData = as.matrix(matrixData[,-1])
+    }
+
+    colnames(matrixData) = c(previousColumnNames, newColumnNames)
+  }
+
+  return(matrixData)
 }

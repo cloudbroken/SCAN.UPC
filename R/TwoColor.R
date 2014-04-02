@@ -8,17 +8,37 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-SCAN_TwoColor = function(inFilePattern, outFilePath=NA, verbose=TRUE)
+SCAN_TwoColor = function(inFilePattern, outFilePath=NA, batchFilePath=NA, verbose=TRUE)
 {
-  ProcessTwoColor(inFilePattern, outFilePath=outFilePath, verbose=verbose)
+  if (is.na(batchFilePath))
+    return(processTwoColor(inFilePattern, outFilePath=outFilePath, verbose=verbose))
+
+  expressionSet = processTwoColor(inFilePattern, outFilePath=NA, verbose=verbose)
+  expressionSet = BatchAdjustFromFile(expressionSet, batchFilePath)
+
+  if (!is.na(outFilePath))
+    write.table(round(exprs(expressionSet), 8), outFilePath, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)
+
+  return(expressionSet)
 }
 
-UPC_TwoColor = function(inFilePattern, outFilePath=NA, modelType="nn", convThreshold=0.01, verbose=TRUE)
+UPC_TwoColor = function(inFilePattern, outFilePath=NA, modelType="nn", convThreshold=0.01, batchFilePath=NA, verbose=TRUE)
 {
-  ProcessTwoColor(inFilePattern, outFilePath=outFilePath, upcModelType=modelType, upcConv=convThreshold, verbose=verbose)
+  if (!is.na(batchFilePath))
+  {
+    expressionSet = SCAN_TwoColor(inFilePattern, outFilePath=NA, batchFilePath=batchFilePath, verbose=verbose)
+    expressionSet = UPC_Generic_ExpressionSet(expressionSet, modelType=modelType, convThreshold=convThreshold, verbose=verbose)
+
+    if (!is.na(outFilePath))
+      write.table(round(exprs(expressionSet), 8), outFilePath, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)
+
+    return(expressionSet)
+  }
+
+  return(processTwoColor(inFilePattern, outFilePath=outFilePath, upcModelType=modelType, upcConv=convThreshold, verbose=verbose))
 }
 
-ProcessTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcConv=0.01, verbose=TRUE)
+processTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcConv=0.01, verbose=TRUE)
 {
   if (shouldDownloadFromGEO(inFilePattern))
     inFilePattern = downloadFromGEO(inFilePattern)
@@ -69,13 +89,53 @@ ProcessTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcCo
     }
   }
 
+
+  # Account for duplicate feature names so we can put it in an ExpressionSet object
+  featuresTable = table(outData[,1])
+  duplicateFeatureNames = sort(names(featuresTable)[featuresTable>1])
+  duplicateFeatureIndices = which(outData[,1] %in% duplicateFeatureNames)
+
+  message("Updating duplicate probe names.")
+  outData[duplicateFeatureIndices,1] = paste(outData[duplicateFeatureIndices,1], 1:length(duplicateFeatureIndices), sep="_")
+
+#  for (i in 1:length(duplicateFeatureNames))
+#  {
+#    feature = duplicateFeatureNames[i]
+#print(feature)
+#print(featuresTable[feature])
+#print(paste(i, " / ", length(duplicateFeatureNames)))
+#  
+#    indices = which(outData[,1]==feature)
+#    outData[indices,1] = paste(outData[indices,1], 1:length(indices), sep="_")
+#  }
+#print(featuresTable)
+#print(outData[1:10,1])
+#  nonControlFeatures = names(featuresTable)[featuresTable==1]
+#print(head(nonControlFeatures))
+#print(outData[,1] %in% nonControlFeatures)
+#  outData = outData[which(outData[,1] %in% nonControlFeatures),]
+#print(dim(outData))
+#print(head(outData))
+#stop()
+
+  featureNames = outData[,1]
+  sampleNames = colnames(outData)[-1]
+  exprData = apply(outData[,-1], 2, as.numeric)
+  rownames(exprData) = featureNames
+  colnames(exprData) = sampleNames
+
   if (!is.na(outFilePath))
   {
     if (verbose)
       message(paste("Saving results to", outFilePath))
 
-    write.table(outData, outFilePath, sep="\t", quote=FALSE, row.names=FALSE, col.names=TRUE)
+    write.table(exprData, outFilePath, sep="\t", quote=FALSE, row.names=TRUE, col.names=TRUE)
   }
 
-  return(list(featureNames=outData[,1], data=apply(outData[,2:ncol(outData)], 2, as.numeric)))
+  # Create ExpressionSet object
+  expressionSet = ExpressionSet(exprData)
+  sampleNames(expressionSet) = sampleNames
+  featureNames(expressionSet) = featureNames
+
+  return(expressionSet)
 }

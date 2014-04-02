@@ -5,7 +5,7 @@
   Generic function to apply Universal exPression Codes (UPC) standardization
 }
 \description{
-This function can be used to derive UPC values for various types of mRNA expression data. It requires the user to specify expression values for many genes (or transcripts, exons, or probes). And optionally, the user can specify the length and/or GC content (\# of G or C bases) for the corresponding genomic region (e.g., gene). If these values are specified, the UPC algorithm will correct for biases resulting from length or GC content.
+This function can be used to derive UPC values for various types of mRNA expression data. It requires the user to specify expression values for many genes (or transcripts, exons, or probes). And optionally, the user can specify the length and/or GC content (proportion of G or C bases) for the corresponding genomic region (e.g., gene). If these values are specified, the UPC algorithm will correct for biases resulting from length or GC content.
 }
 \usage{
 UPC_Generic(expressionValues, lengths = NULL, gcContent = NULL, modelType = "nn", convThreshold = 0.001, higherValuesIndicateHigherExpression = TRUE, verbose = TRUE)

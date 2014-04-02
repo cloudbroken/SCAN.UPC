@@ -1,3 +1,14 @@
+CHANGES IN VERSION 2.5.8
+-------------------------
+
+Notes:
+
+The SCAN_TwoColor and UPC_TwoColor functions have changed. They now return ExpressionSet objects (and by necessity, exclude any probes that contain duplicate names [control probes]).
+Also UPC_RNASeq returns an ExpressionSet object.
+Fixed a bug where UPC_RNASeq returned NA values if there was no entry in the annotation file.
+TwoColor methods now add an integer suffix to each probe for which there is a duplicate name.
+
+
 CHANGES IN VERSION 2.2.8
 -------------------------
 
