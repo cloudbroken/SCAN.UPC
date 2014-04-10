@@ -21,6 +21,9 @@ UPC_Generic_ExpressionSet = function(expressionSet, sequenceFeatureName=NA, mode
     message(paste("Extracting sequence information from meta column", sequenceFeatureName))
     sequences = as.character(meta[,sequenceFeatureName])
 
+    if (any(sequences == ""))
+      message(paste(sum(sequences == ""), " features will be excluded because they contain an empty ", sequenceFeatureName, " value.", sep=""))
+
     keep = which(sequences != "")
     data = data[keep,]
     meta = meta[keep,]
@@ -39,7 +42,7 @@ UPC_Generic_ExpressionSet = function(expressionSet, sequenceFeatureName=NA, mode
     UPC_Generic(x, lengths=lengths, gcContent=gcContent, modelType=modelType, convThreshold=convThreshold, higherValuesIndicateHigherExpression=higherValuesIndicateHigherExpression, verbose=verbose)
   })
 
-  rownames(upcData) = featureNames(expressionSet)
+  rownames(upcData) = rownames(data)
   exprs(expressionSet) = upcData
 
   return(expressionSet)
