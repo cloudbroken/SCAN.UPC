@@ -41,7 +41,7 @@ pwd <- setwd(tempdir())
 
 \section{Background}
 
-This vignette describes how to normalize samples with the \textit{Single-Channel Array Normalization} (SCAN) and \textit{Universal exPression Codes} (UPC) methods. The motivations and methodology behind these approaches have been described in detail in recent papers \citep{piccolo:genomics,piccolo:pnas}. Briefly, SCAN and UPC are quantitative approaches for normalizing mRNA expression data. The SCAN method produces expression estimates for one-color and two-color microarrays and is most suitable for analyses where a single such technology is used. The UPC method produces standardized expression values that estimate whether a given gene (or transcript or exon) is ``active'' in a given sample. UPCs can be generated for microarrays or RNA-Seq data and can be interpreted consistently, irrespective of the technology/platform used for profiling; thus UPCs are suitable for integrating expression data across multiple platforms.
+This vignette describes how to normalize samples with the \textit{Single-Channel Array Normalization} (SCAN) and \textit{Universal exPression Codes} (UPC) methods. The motivations and methodology behind these approaches have been described in detail in recent papers \citep{piccolo:genomics,piccolo:pnas}. Briefly, SCAN and UPC are quantitative approaches for normalizing gene-expression data. The SCAN method produces standardized expression estimates for one-color and two-color microarrays and is most suitable for analyses where a single such technology is used. The UPC method produces standardized expression values that estimate whether a given gene (or transcript or exon) is ``active'' in a given sample. UPCs can be generated for microarrays or RNA-Seq data and can be interpreted consistently, irrespective of the technology/platform used for profiling; thus UPCs are suitable for integrating expression data across multiple platforms.
 
 A distinguishing feature of the SCAN and UPC methods is that they are applied to \textit{individual} samples. This means that the output for a given sample will be the same whether the sample is processed in isolation or jointly with other samples. This feature also has computational advantages: when a large batch of samples needs to be processed, it is not necessary to store the entire batch in computer memory at the same time.
 
@@ -108,6 +108,8 @@ These mappings can be applied during normalization using code such as the follow
 normalized = SCAN(celFilePath, probeSummaryPackage=pkgName)
 @
 
+It is also possible to adjust the data set for batch effects. Please see the description of the \Rfunction{batchFilePath} parameter in the documentation.
+
 %Finally, we clean up files that were created in this demo.
 %
 %<<cleanup, eval=FALSE>>=
@@ -127,7 +129,7 @@ SCAN_TwoColor("GSM1072833", "output_file.txt")
 
 \section{How to produce UPC estimates for microarrays or RNA-Seq}
 
-The SCAN algorithm uses a two-component mixture model to distinguish expression levels that constitute background noise from those that represent biological signal. This model can be used to estimate whether a given gene is active (i.e., belongs to the mixture component representing biological signal). These Universal exPression Codes (UPCs) range between zero and one: a high value suggests a greater likelihood that a given gene is active in the sample, whereas a low value indicates the opposite. This methodology can be applied to Affymetrix microarrays, Agilent two-color microarrays, and RNA-Seq read counts.
+The SCAN algorithm uses a two-component mixture model to distinguish expression levels that constitute background noise from those that represent biological signal. This model can be used to estimate whether a given gene is active (i.e., belongs to the mixture component representing biological signal). These Universal exPression Codes (UPCs) range between zero and one: a high value suggests a greater likelihood that a given gene is active in the sample, whereas a low value indicates the opposite. This package contains functions for applying this methodology to Affymetrix microarrays, Agilent two-color microarrays, and RNA-Seq read counts.
 
 The \Rpackage{SCAN.UPC} package contains a series of functions that can be used to derive UPCs. These functions have similar parameters to their SCAN counterparts. As shown in the examples below, the \Rfunction{UPC} function produces UPC values for Affymetrix microarrays, and the \Rfunction{UPC\_TwoColor} function can be applied to Agilent data.
 
@@ -164,6 +166,10 @@ After an annotation file has been generated, RNA-Seq read counts can be processe
 <<upc-rnaseq, eval=FALSE>>=
 upc3 = UPC_RNASeq("ReadCounts.txt", "Annotation.txt")
 @
+
+Note: In the current version of this package, it is now possible to UPC normalize data from any expression-profiling platform. The documentation describes the \Rfunction{UPC\_Generic} and \Rfunction{UPC\_Generic\_ExpressionSet} functions, which enable this functionality.
+
+It is also possible to adjust the data set for batch effects. Please see the description of the \Rfunction{batchFilePath} parameter in the documentation.
 
 \section{Reducing processing time for Affymetrix microarray normalization}
 
