@@ -5,20 +5,20 @@
   Helper function for applying the ComBat batch-adjusting methodology to an ExpressionSet object
 }
 \description{
-  TBD
+  This is a convenience function for adjusting an ExpressionSet object for batch effects.
 }
 \usage{
 BatchAdjust(expressionSet, batchVariableName, covariateVariableNames=c())
 }
 \arguments{
   \item{expressionSet}{
-    TBD
+    An \code{ExpressionSet} object that contains data to be adjusted for batch effects. This object should contain at least one \code{phenoData} column that indicates the batch number for each sample. Covariates may also be specified in other \code{phenoData} columns. Required.
 }
   \item{batchVariableName}{
-    TBD
+    Name of \code{phenoData} column that indicates the batch number for each sample. Required.
 }
   \item{covariateVariableNames}{
-    TBD
+    Name(s) of \code{phenoData} column(s) that indicate the covariate information for each sample. Optional.
 }
 }
 %\details{
@@ -27,14 +27,14 @@ BatchAdjust(expressionSet, batchVariableName, covariateVariableNames=c())
 \value{
   An ExpressionSet object indicating expression levels after batch adjustment.
 }
-\references{
-  TBD
-}
+%\references{
+%  TBD
+%}
 \author{
   Stephen R. Piccolo
 }
 \note{
-  TBD
+  This function provides a convenient way to batch adjust an \code{ExpressionSet} object. It invokes the \code{ComBat} function within the \code{sva} package. Please see that package for additional details about how batch adjusting is performed. If multiple covariates are specified, a model matrix will be constructed that accounts for all covariates.
 }
 
 % ~Make other sections like Warning with \section{Warning }{....} ~

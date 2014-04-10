@@ -2,31 +2,29 @@
 \alias{UPC_RNASeq_Single}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  Universal exPression Codes (UPC) for RNA-Seq data
+  Apply Universal exPression Codes (UPC) transformation to a single RNA-Seq sample
 }
 \description{
-This function is used to derive UPC values for RNA-Seq data. It requires an input file that specifies a read count for each genomic region (e.g., gene). This file should list a unique identifier for each region in the first column and corresponding read counts (not RPKM/FPKM values) in the second column.
-
-This function also can correct for the GC content and length of each genomic region. Users who wish to enable this correction must provide a separate annotation file. This tab-separated file should contain a row for each genomic region. The first column should contain a unique identifier that corresponds to identifiers from the read-count input file. The second column should indicate the length of the genomic region. And the third column should specify the number of G or C bases in the region. The \code{\link{ParseMetaFromGtfFile}} function can be used to generate annotation files.
+This function is used to derive UPC values for a single RNA-Seq sample. It requires an input vector that specifies a read count for each genomic region (e.g., gene). Optionally, this function can correct for the GC content and length of each genomic region.
 }
 \usage{
 UPC_RNASeq_Single(expressionValues, featureNames, lengths = NULL, gcContent = NULL, modelType = "nn", convThreshold = 0.01, ignoreZeroes = FALSE, verbose = TRUE)
 }
 \arguments{
   \item{expressionValues}{
-     TBD
+     A vector of RNA-Seq count values. Required.
 }
   \item{featureNames}{
-     TBD
+     A vector of unique names that correspond to the count values. Required.
 }
   \item{lengths}{
-     TBD
+     A vector indicating the length (in genomic bases) of the genomic region that corresponds to the count values.
 }
   \item{gcContent}{
-     TBD
+     A vector indicating the number of G/C bases in the genomic region that corresponds to the count values.
 }
   \item{modelType}{
-     Various models can be used for the mixture model to differentiate between active and inactive probes. The default is the normal-normal model (``nn''), which uses the normal distribution. Other available options are log-normal (``ln'') and negative-binomial (``nb'').
+     Various models can be used for the mixture model to differentiate between active and inactive probes. The default is the normal-normal model (``nn''), which uses the normal distribution. Other available options are log-normal (``ln''), negative-binomial (``nb''), and normal-normal Bayes (``nn_bayes'').
 }
   \item{convThreshold}{
      Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge (or converges too quickly), it may be useful to adjust this value. (This parameter is optional.)
@@ -42,7 +40,7 @@ UPC_RNASeq_Single(expressionValues, featureNames, lengths = NULL, gcContent = NU
 %  ~~ If necessary, more details than the description above ~~
 %}
 \value{
-  An \code{ExpressionSet} object that contains a row for each probeset/gene/transcript and a column for each input file.
+  A vector that contains a UPC value for each probeset/gene/transcript.
 }
 \references{
   Piccolo SR, Withers MR, Francis OE, Bild AH and Johnson WE. Multi-platform single-sample estimates of transcriptional activation. Proceedings of the National Academy of Sciences of the United States of America, 2013, 110:44 17778-17783.
@@ -52,6 +50,8 @@ UPC_RNASeq_Single(expressionValues, featureNames, lengths = NULL, gcContent = NU
 }
 \note{
   RNA-Seq data by nature have a lot of zero read counts. Samples with an excessive number of zeroes may lead to error messages because genes cannot be allocated properly to bins. The user can specify \code{ignoreZeroes=TRUE} to avoid this error. In practice, we have seen that the resulting UPC values are similar with either approach.
+
+  The \code{modelType} parameter indicates which type of mixture model to use for UPC transformation. The "nn_bayes" model type is an experimental new approach intended for experiments where a subset of genes are expressed at extreme levels.
 }
 
 % ~Make other sections like Warning with \section{Warning }{....} ~
@@ -60,11 +60,11 @@ UPC_RNASeq_Single(expressionValues, featureNames, lengths = NULL, gcContent = NU
 % ~~objects to See Also as \code{\link{help}}, ~~~
 %}
 
-\examples{
-\dontrun{
-result = UPC_RNASeq("ReadCounts.txt", "Annotation.txt")
-}
-}
+%\examples{
+%\dontrun{
+%result = UPC_RNASeq("ReadCounts.txt", "Annotation.txt")
+%}
+%}
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

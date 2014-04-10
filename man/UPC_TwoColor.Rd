@@ -18,13 +18,13 @@ UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01
      Absolute or relative path where the output file will be saved. (This parameter is optional.)
 }
   \item{modelType}{
-     Various models can be used for the mixture model to differentiate between active and inactive probes. The default is the normal-normal model (``nn''), which uses the normal distribution. Other available options are log-normal (``ln'') and negative-binomial (``nb'').
+     Various models can be used for the mixture model to differentiate between active and inactive probes. The default is the normal-normal model (``nn''), which uses the normal distribution. Other available options are log-normal (``ln''), negative-binomial (``nb''), and normal-normal Bayes (``nn_bayes'').
 }
   \item{convThreshold}{
-     Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge, it may be useful to adjust this value. (This parameter is optional.)
+     Convergence threshold that determines at what point the mixture-model parameters have stabilized. The default value should be suitable in most cases. However, if the model fails to converge, it may be useful to adjust this value. Optional.
 }
   \item{batchFilePath}{
-     TBD
+     Absolute or relative path to a tab-separated text file that indicates batch (and optionally, covariate information) for each sample. Optional.
 }
   \item{verbose}{
      Whether to output more detailed status information as files are processed. Default is TRUE.
@@ -44,6 +44,10 @@ UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01
 }
 \note{
   If a Gene Expression Omnibus (GEO) identifier is specified for the \code{inFilePattern} parameter, an attempt will be made to download the sample(s) directly from GEO. If a study identifier (e.g., GSE39655) is specified, all CEL files from that study will be downloaded. If a sample identifier (e.g., GSM1072833) is specified, only that sample will be downloaded.
+
+  The \code{batchFilePath} parameter provides a convenient way to adjust the data for batch effects. It invokes the \code{ComBat} function within the \code{sva} package. Please see that package for additional details about how batch adjusting is performed. Batch adjusting is performed before UPC transformation occurs.
+
+  The \code{modelType} parameter indicates which type of mixture model to use for UPC transformation. The "nn_bayes" model type is an experimental new approach intended for experiments where a subset of genes are expressed at extreme levels.
 }
 
 % ~Make other sections like Warning with \section{Warning }{....} ~

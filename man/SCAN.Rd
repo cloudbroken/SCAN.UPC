@@ -43,10 +43,10 @@ UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackag
      The type of probes to be used. This parameter is optional and should only be specified when Affymetrix Exon 1.0 ST arrays are being processed. This parameter allows the user to specify the subset of probes that should be used and how the probes should be grouped. Available options are NA, "core", "extended", "full", or "probeset". When "probeset" is used, all probes will be used, and the probes will be grouped according to the Affymetrix probeset definitions. When "core", "extended", or "full" are used, the probes that Affymetrix has defined to fall within each classification will be used, and probes will be grouped by Entrez Gene IDs (as defined in the corresponding annotation package). It is recommended to specify "probeset" when the \emph{probeSummaryPackage} parameter is being used so that all probes will be considered.
 }
   \item{modelType}{
-    TBD
+    The type of mixture model to be used. This value can be either "nn" (default) or "nn_bayes." 
 }
   \item{batchFilePath}{
-     Absolute or relative path to a file where a text file containing batch information is stored.
+    Absolute or relative path to a tab-separated text file that indicates batch (and optionally, covariate information) for each sample. Optional.
 }
   \item{verbose}{
      Whether to output more detailed status information as files are normalized. Default is TRUE.
@@ -72,6 +72,10 @@ By default, \code{SCAN} and \code{UPC} use the default mappings between probes a
 Because the SCAN/UPC algorithm accounts for nucleotide-level genomic composition across thousands of probes, it may take several minutes to normalize a sample, depending on the computer's processor speed and the type of microarray. To enable users to normalize samples in a shorter period of time, we have provided alternative functions called \code{SCANfast} and \code{UPCfast}. In this approach, a smaller number of probes is used for normalization, and a less stringent convergence threshold is used by default. We have found that microarrays processed with \code{SCANfast} (using default parameters) require 75\% less processing time (on average) but produce output values that correlate strongly (r = 0.998) with values produced by the \code{SCAN} function for the same arrays.
 
 It is also possible to execute these functions in parallel. This approach uses the \code{foreach} package behind the scenes. If you have registered a parallel backend (for example, via the \code{doParallel} package), multiple CEL files can be processed in parallel. Otherwise, the files will be processed sequentially.
+
+The \code{batchFilePath} parameter provides a convenient way to adjust the data for batch effects. It invokes the \code{ComBat} function within the \code{sva} package. Please see that package for additional details about how batch adjusting is performed. Batch adjusting will be performed after values have been SCAN normalized and summarized at the gene/probeset level. This is also true when \code{UPC} and \code{UPCfast} are being used---the data will be SCAN normalized and summarized, then batch adjusting will be performed, and lastly UPC transformation will occur. This process is different from when \code{UPC} or \code{UPCfast} are invoked without batch information; in this scenario, no SCAN normalization will occur.
+
+The \code{modelType} parameter indicates which type of mixture model to use for UPC transformation. The "nn" model type has been used since the default implementation of this package. The "nn_bayes" model type is an experimental new approach intended for experiments where a subset of genes are expressed at extreme levels. When this model type is used, values will first be SCAN normalized and summarized at the gene/probeset level.
 }
 
 % ~Make other sections like Warning with \section{Warning }{....} ~

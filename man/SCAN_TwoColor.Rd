@@ -17,7 +17,7 @@ SCAN_TwoColor(inFilePattern, outFilePath = NA, batchFilePath = NA, verbose = TRU
      Absolute or relative path where the output file will be saved. This is optional.
 }
   \item{batchFilePath}{
-     TBD
+     Absolute or relative path to a tab-separated text file that indicates batch (and optionally, covariate information) for each sample. Optional.
 }
   \item{verbose}{
      Whether to output more detailed status information as files are normalized. Default is TRUE.
@@ -37,6 +37,8 @@ SCAN_TwoColor(inFilePattern, outFilePath = NA, batchFilePath = NA, verbose = TRU
 }
 \note{
   If a Gene Expression Omnibus (GEO) identifier is specified for the \code{inFilePattern} parameter, an attempt will be made to download the sample(s) directly from GEO. If a study identifier (e.g., GSE39655) is specified, all CEL files from that study will be downloaded. If a sample identifier (e.g., GSM1072833) is specified, only that sample will be downloaded.
+
+  The \code{batchFilePath} parameter provides a convenient way to adjust the data for batch effects. It invokes the \code{ComBat} function within the \code{sva} package. Please see that package for additional details about how batch adjusting is performed. Batch adjusting is performed after values have been SCAN normalized.
 }
 
 % ~Make other sections like Warning with \section{Warning }{....} ~
