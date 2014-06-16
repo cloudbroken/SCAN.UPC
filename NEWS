@@ -1,6 +1,13 @@
 CHANGES IN VERSION 2.5.8
 -------------------------
 
+FIXES
+    o ParseMetaFromGtfFile tweaks (ambiguous function call, spaces in FASTA descriptors)
+    o BrainArray summarization when probe maps to multiple genes/probesets
+
+CHANGES IN VERSION 2.5.8
+-------------------------
+
 NEW FEATURES
 
     o This package now provides "generic" functions for UPC normalizing any type of gene-expression data. These values can be input as vectors or ExpressionSet objects. This means that data from Illumina BeadChip microarrays or any other type of microarray can be UPC normalized with relative ease. It is also easy through integration with the GEOquery package to UPC normalize any preprocessed data set from GEO.

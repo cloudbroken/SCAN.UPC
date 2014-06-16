@@ -50,6 +50,8 @@ InstallBrainArrayPackage = function(celFilePath, version, organism, annotationSo
 {
   platform = cleancdfname(read.celfile.header(celFilePath, info="full")$cdfName)
   platform = sub("cdf", "", platform)
+  platform = sub("stv1", "st", platform)
+  platform = sub("stv2", "st", platform)
 
   packageName=paste(platform, organism, annotationSource, "probe", sep="")
 
@@ -74,7 +76,10 @@ ParseMetaFromGtfFile = function(gtfFilePath, fastaFilePattern, outFilePath, feat
     stop(paste("No FASTA file could be found at", fastaFilePattern))
 
   fastaStrings = readDNAStringSet(fastaFilePaths)
-  fastaChromosomes = names(fastaStrings)
+
+  # This is in case the FASTA description has more than the chromosome name (delimiter may be a space or |)
+  names(fastaStrings) = gsub("\\|", " ", names(fastaStrings))
+  names(fastaStrings) = sapply(names(fastaStrings), function(x) { strsplit(x, " ")[[1]][1] })
 
   message("Saving GTF data to temporary files")
   tmpDir = tempdir()
@@ -103,9 +108,9 @@ ParseMetaFromGtfFile = function(gtfFilePath, fastaFilePattern, outFilePath, feat
     featureType = lineItems[2]
     subFeatureType = lineItems[3]
 
-    if (chromosome %in% fastaChromosomes && subFeatureType == "exon" && length(intersect(featureType, featureTypes)) > 0)
+    if (chromosome %in% names(fastaStrings) && subFeatureType == "exon" && length(intersect(featureType, featureTypes)) > 0)
     {
-      chromosomes = unique(c(chromosomes, chromosome))
+      chromosomes = base::unique(c(chromosomes, chromosome))
 
       startPos = as.integer(lineItems[4])
       stopPos = as.integer(lineItems[5])
@@ -159,7 +164,7 @@ ProcessGtfSubset = function(tmpFilePath, fastaStrings, chromosome, outFilePath, 
     {
       featureCoordsList[[featureID]] = thisRange
     } else {
-      featureCoordsList[[featureID]] = union(featureCoordsList[[featureID]], thisRange)
+      featureCoordsList[[featureID]] = IRanges::union(featureCoordsList[[featureID]], thisRange)
     }
   }
 

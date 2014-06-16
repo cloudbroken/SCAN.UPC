@@ -257,12 +257,10 @@ UPC_nn_bayes = function(y, l=NULL, gc=NULL, conv=0.001, q=1, empirical=T, lambda
     }
 
     y1=y[use]
-
-    #pi_h=.5
     
-    n_total <- length(y1)  #
-    beta_a <- n_total*0.1*exprProp; beta_b <- n_total*0.1*(1-exprProp)  #
-    pi_h= beta_a/(beta_a+beta_b) #
+    n_total <- length(y1)  
+    beta_a <- n_total*0.1*exprProp; beta_b <- n_total*0.1*(1-exprProp)  
+    pi_h= beta_a/(beta_a+beta_b) 
     
     x_1=cbind(X[y1>median(y1),])
     beta_1=solve(t(x_1)%*%x_1)%*%t(x_1)%*%y1[y1>median(y1)]
@@ -279,22 +277,18 @@ UPC_nn_bayes = function(y, l=NULL, gc=NULL, conv=0.001, q=1, empirical=T, lambda
     } else {
       cov_beta_inv <- diag(rep(lambda,NCOL(X)))
     }
- 
+    
     theta=c(pi_h,beta_1,beta_2)
     thetaold=theta+1000
     i<- 0
 
     gamma=1.*(y1>median(y1))
-    #x=cbind(1,gamma,X[,-1])
-    #beta=solve(t(x)%*%(x))%*%t(x)%*%y1
-
-    #while(max(abs((theta-thetaold)/thetaold))>conv)
+    
     while(max(abs(theta/thetaold-1))>conv)
     {
       thetaold=theta 
-     
+      ptm <- proc.time()
       #E-step
-      #gamma <- (pi_h*dnorm(y1,cbind(1,1,X[,-1])%*%beta,sqrt(sigma2_1)))/(pi_h*dnorm(y1,cbind(1,1,X[,-1])%*%beta,sqrt(sigma2_1))+(1-pi_h)*dnorm(y1,cbind(1,0,X[,-1])%*%beta,sqrt(sigma2_2)))
       b_div_a <- (1-pi_h)/pi_h * sqrt(sigma2_2/sigma2_1) * exp(-1/2*((y1-as.numeric(X%*%beta_1))^2/sigma2_1 - (y1-as.numeric(X%*%beta_2))^2/sigma2_2))
       gamma <- as.numeric(1/(1+b_div_a))
       
@@ -304,24 +298,20 @@ UPC_nn_bayes = function(y, l=NULL, gc=NULL, conv=0.001, q=1, empirical=T, lambda
       x=cbind(1,gamma,X[,-1])
      
       #M-step
-      #beta=solve(t(x)%*%(x))%*%t(x)%*%y1
-      #sigma2_1  <- sigma2_2 <- sum((y1-x%*%beta)^2)/length(y1)
-     
-      beta_1 <- solve(t(X)%*%diag(1-gamma)%*%X+as.numeric(sigma2_1)*cov_beta_inv) %*% t(X)%*%diag(1-gamma)%*%y1
-      beta_2 <- solve(t(X)%*%diag(gamma)%*%X+as.numeric(sigma2_2)*cov_beta_inv) %*% t(X)%*%diag(gamma)%*%y1
-      sigma2_1 <- (t(y1-X%*%beta_1) %*% (diag(1-gamma)) %*% (y1-X%*%beta_1)) / sum((1-gamma))
-      sigma2_2 <- (t(y1-X%*%beta_2) %*% (diag(gamma)) %*% (y1-X%*%beta_2)) / sum(gamma)
+    
+      beta_1 <- solve(t(X*(1-gamma))%*%X+as.numeric(sigma2_1)*cov_beta_inv) %*% t(X*(1-gamma))%*%y1
+      beta_2 <- solve(t(X*gamma)%*%X+as.numeric(sigma2_2)*cov_beta_inv) %*% t(X*gamma)%*%y1
+      sigma2_1 <- (t((y1-X%*%beta_1) * (1-gamma)) %*% (y1-X%*%beta_1)) / sum((1-gamma))
+      sigma2_2 <- (t((y1-X%*%beta_2) * gamma) %*% (y1-X%*%beta_2)) / sum(gamma)
       
-      #pi_h <- mean(gamma)
       pi_h <- (beta_a + sum(gamma)) / (n_total+beta_a+beta_b)
       
-      #theta=c(pi_h,beta_1,beta_2)
       theta=c(pi_h, beta_1, beta_2)
       
       i <- i+1
       message(paste("Iteration", i))
       message(max(abs((theta-thetaold)/thetaold)))
-
+      
       # Abort if most values are to one extreme
       if (sum(x[,2] > 0.99) > nrow(x) * 0.99)
       {
@@ -343,11 +333,6 @@ UPC_nn_bayes = function(y, l=NULL, gc=NULL, conv=0.001, q=1, empirical=T, lambda
 
     probs[use]=gamma
   }
-
-  #y.sim=rnorm(length(y),x%*%beta,sqrt(sigma2_1))
-  #par(mfrow=c(2,1))
-  #hist(y,breaks=250, xlim=c(0,30))
-  #hist(y.sim,breaks=250,col=2, xlim=c(0,30))
 
   return(probs)
 }

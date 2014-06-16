@@ -158,6 +158,11 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
     affyExpressionFS <- read.celfiles(celFilePath, pkgname=annotationPackageName)
   }
 
+  annotationPackageName = affyExpressionFS@annotation
+
+  if (is.na(exonArrayTarget) && (grepl("hugene", annotationPackageName)))
+    exonArrayTarget = "probeset"
+
   if (is.na(exonArrayTarget))
   {
     pmSeq = pmSequence(affyExpressionFS)
@@ -169,10 +174,10 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
 
   if (!is.na(probeLevelOutFilePath) && file.exists(probeLevelOutFilePath))
   {
-    data = read.table(probeLevelOutFilePath, sep="\t", stringsAsFactors=FALSE, header=FALSE, row.names=1)
-    y_norm = data[,1]
-    gam = data[,2]
-    xyCoord = rownames(data)
+    data = read.table(probeLevelOutFilePath, sep="\t", stringsAsFactors=FALSE, header=FALSE, row.names=NULL)
+    xyCoord = as.character(data[,1])
+    y_norm = as.numeric(data[,2])
+    gam = as.numeric(data[,3])
   } else
   {
     numSequences = length(pmSeq)
@@ -233,7 +238,17 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
 
     y_norm = round(y_norm, 8)
     gam = round(gam, 8)
-    xyCoord = paste(getX(affyExpressionFS, type="pm")[which(shouldUseProbes)], getY(affyExpressionFS, type="pm")[which(shouldUseProbes)], sep="_")
+
+    xCoord = getX(affyExpressionFS, type="pm")[which(shouldUseProbes)]
+    yCoord = getY(affyExpressionFS, type="pm")[which(shouldUseProbes)]
+
+    xyCoord = paste(xCoord[shouldUseProbes], yCoord[shouldUseProbes], sep="_")
+
+    y_norm = y_norm[shouldUseProbes]
+    gam = gam[shouldUseProbes]
+    my = my[shouldUseProbes]
+    m1 = m1[shouldUseProbes]
+    m2 = m2[shouldUseProbes]
 
     if (!is.na(probeLevelOutFilePath))
     {
@@ -242,6 +257,11 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
       write.table(normOutput, probeLevelOutFilePath, quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
     }
   }
+
+  values = y_norm
+  if (UPC)
+    values = gam
+  names(values) = xyCoord
 
   if (!any(is.na(probeSummaryPackage)) && probeSummaryPackage != "NA")
   {
@@ -252,34 +272,25 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
       probeSummaryPackage = eval(as.name(probeSummaryPackage))
     }
 
-    probeSetNames = get("Probe.Set.Name", probeSummaryPackage)
-    probeSummaryXCoord = get("x", probeSummaryPackage)
-    probeSummaryYCoord = get("y", probeSummaryPackage)
-    probeSummaryXyCoord = paste(probeSummaryXCoord, probeSummaryYCoord, sep="_")
+    probeSummaryData = as.data.frame(probeSummaryPackage)
+    probeSummaryXyCoord = paste(probeSummaryData$x, probeSummaryData$y, sep="_")
+    probeSummaryValues = values[probeSummaryXyCoord]
 
-    probeSummaryData = matrix(probeSetNames, ncol=1)
-    rownames(probeSummaryData) = probeSummaryXyCoord
-
-    dataProbeIndices = which(xyCoord %in% probeSummaryXyCoord)
-    keepXyCoord = xyCoord[dataProbeIndices]
-
-    probeNames = as.character(probeSummaryData[keepXyCoord,1])
+    return(as.matrix(tapply(probeSummaryValues, probeSummaryData$Probe.Set.Name, FUN=mean, trim=0.1, na.rm=TRUE)))
   } else
   {
-    dataProbeIndices = 1:length(y_norm)
+    xCoord = getX(affyExpressionFS, type="pm")[which(shouldUseProbes)]
+    yCoord = getY(affyExpressionFS, type="pm")[which(shouldUseProbes)]
 
     if (is.na(exonArrayTarget))
     {
-      probeNames = probeNames(affyExpressionFS)[which(shouldUseProbes)]
+      probeSetNames = probeNames(affyExpressionFS)[shouldUseProbes]
     } else {
-      probeNames = probeNames(affyExpressionFS, target=exonArrayTarget)[which(shouldUseProbes)]
+      probeSetNames = probeNames(affyExpressionFS, target=exonArrayTarget)[shouldUseProbes]
     }
+
+    return(as.matrix(tapply(values, probeSetNames, FUN=mean, trim=0.1)))
   }
-
-  if (UPC)
-    return(as.matrix(tapply(gam[dataProbeIndices], probeNames, FUN=mean, trim=0.1)))
-
-  return(as.matrix(tapply(y_norm[dataProbeIndices], probeNames, FUN=mean, trim=0.1)))
 }
 
 getSampleIndices = function(total, intervalN, verbose=TRUE)
