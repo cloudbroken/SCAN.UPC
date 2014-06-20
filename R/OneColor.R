@@ -274,7 +274,7 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
     data = as.matrix(merge(data, probeSummaryData, by.x=3, by.y=ncol(probeSummaryData), sort=FALSE)[,c(2,3,1,8)])
   }
 
-  # A trim value of 0.3 seems to work better than 0.1 for hugene arrays
+  # A trim value of 0.3 seems to work better than 0.1 for HuGene 1.0 arrays (possibly others)
   return(as.matrix(tapply(as.numeric(data[,1]), data[,4], FUN=mean, trim=0.1)))
 }
 
