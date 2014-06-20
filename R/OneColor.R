@@ -147,66 +147,40 @@ createOutputDir = function(dirPath, verbose=TRUE)
 
 processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackage, UPC, probeLevelOutDirPath, exonArrayTarget, intervalN, nbins=25, binsize=5000, convThreshold=0.01, verbose=TRUE)
 {
-  probeLevelOutFilePath = NA
-  if (!is.na(probeLevelOutDirPath))
-    probeLevelOutFilePath = paste(probeLevelOutDirPath, "/", basename(celFilePath), ".txt", sep="")
+#  probeLevelOutFilePath = NA
+#  if (!is.na(probeLevelOutDirPath))
+#    probeLevelOutFilePath = paste(probeLevelOutDirPath, "/", basename(celFilePath), ".txt", sep="")
 
-  if (is.na(annotationPackageName))
-  {
-    affyExpressionFS <- read.celfiles(celFilePath)
-  } else {
-    affyExpressionFS <- read.celfiles(celFilePath, pkgname=annotationPackageName)
-  }
-
-  annotationPackageName = affyExpressionFS@annotation
-
-  if (is.na(exonArrayTarget) && (grepl("hugene", annotationPackageName)))
-    exonArrayTarget = "probeset"
-
-  if (is.na(exonArrayTarget))
-  {
-    pmSeq = pmSequence(affyExpressionFS)
-  } else {
-    pmSeq = pmSequence(affyExpressionFS, target=exonArrayTarget)
-  }
-
-  shouldUseProbes = width(pmSeq)==25
-
-  if (!is.na(probeLevelOutFilePath) && file.exists(probeLevelOutFilePath))
-  {
-    data = read.table(probeLevelOutFilePath, sep="\t", stringsAsFactors=FALSE, header=FALSE, row.names=NULL)
-    xyCoord = as.character(data[,1])
-    y_norm = as.numeric(data[,2])
-    gam = as.numeric(data[,3])
-  } else
-  {
-    numSequences = length(pmSeq)
-
-    chunkSize = 100000
-    chunkStartIndex = 1
-    chunkEndIndex = chunkStartIndex + chunkSize - 1
-    mxStartIndex = 1
-
-    mx = matrix(nrow=sum(shouldUseProbes), ncol=80)
-
-    while (chunkStartIndex <= numSequences)
+#  if (!is.na(probeLevelOutFilePath) && file.exists(probeLevelOutFilePath))
+#  {
+#    data = read.table(probeLevelOutFilePath, sep="\t", stringsAsFactors=FALSE, header=FALSE, row.names=NULL)
+#    xyCoord = as.character(data[,1])
+#    y_norm = as.numeric(data[,2])
+#    gam = as.numeric(data[,3])
+#  } else
+#  {
+    if (is.na(annotationPackageName))
     {
-      if (chunkEndIndex > numSequences)
-        chunkEndIndex = numSequences
-
-      mxChunk = buildDesignMatrix(pmSeqs=pmSeq[chunkStartIndex:chunkEndIndex], verbose=verbose)
-      mx[mxStartIndex:(mxStartIndex + nrow(mxChunk) - 1),] = mxChunk
-
-      chunkStartIndex = chunkStartIndex + chunkSize
-      chunkEndIndex = chunkEndIndex + chunkSize
-      mxStartIndex = mxStartIndex + nrow(mxChunk)
+      affyExpressionFS <- read.celfiles(celFilePath)
+    } else {
+      affyExpressionFS <- read.celfiles(celFilePath, pkgname=annotationPackageName)
     }
+
+    annotationPackageName = affyExpressionFS@annotation
+    if (is.na(exonArrayTarget) && (grepl("hugene", annotationPackageName)))
+      exonArrayTarget = "probeset"
+
+#    data = oligo::getProbeInfo(affyExpressionFS, field=c("fid", "x", "y", "man_fsetid", "seq"), probeType="pm", target=exonArrayTarget)
+
+    xCoord = getX(affyExpressionFS, type="pm")
+    yCoord = getY(affyExpressionFS, type="pm")
+    xyCoord = paste(xCoord, yCoord, sep="_")
 
     if (is.na(exonArrayTarget))
     {
-      pint = oligo::pm(affyExpressionFS)[which(shouldUseProbes),]
+      pint = oligo::pm(affyExpressionFS)
     } else {
-      pint = oligo::pm(affyExpressionFS, target=exonArrayTarget)[which(shouldUseProbes),]
+      pint = oligo::pm(affyExpressionFS, target=exonArrayTarget)
     }
 
     if ((sum(pint==0) / length(pint)) > 0.01)
@@ -215,9 +189,40 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
       return(NULL)
     }
 
-    my = log2(pint)
-    nGroups = length(my) / binsize
-    samplingProbeIndices = getSampleIndices(total=length(pint), intervalN=intervalN, verbose=verbose)
+    if (is.na(exonArrayTarget))
+    {
+      pmSeq = pmSequence(affyExpressionFS)
+      keepIndices = which(width(pmSeq) == 25)
+      data = cbind(pint[keepIndices], as.character(pmSeq)[keepIndices], xyCoord[keepIndices], probeNames(affyExpressionFS)[keepIndices])
+    } else {
+      pmSeq = pmSequence(affyExpressionFS, target=exonArrayTarget)
+      keepIndices = which(width(pmSeq) == 25)
+      data = cbind(pint[keepIndices], as.character(pmSeq)[keepIndices], xyCoord[keepIndices], probeNames(affyExpressionFS, target=exonArrayTarget)[keepIndices])
+    }
+
+    chunkSize = 100000
+    chunkStartIndex = 1
+    chunkEndIndex = chunkStartIndex + chunkSize - 1
+    mxStartIndex = 1
+
+    mx = matrix(nrow=nrow(data), ncol=80)
+
+    while (chunkStartIndex <= nrow(data))
+    {
+      if (chunkEndIndex > nrow(data))
+        chunkEndIndex = nrow(data)
+
+      mxChunk = buildDesignMatrix(data[chunkStartIndex:chunkEndIndex,2], verbose=verbose)
+      mx[mxStartIndex:(mxStartIndex + nrow(mxChunk) - 1),] = mxChunk
+
+      chunkStartIndex = chunkStartIndex + chunkSize
+      chunkEndIndex = chunkEndIndex + chunkSize
+      mxStartIndex = mxStartIndex + nrow(mxChunk)
+    }
+
+    my = log2(as.numeric(data[,1]))
+    nGroups = nrow(data) / binsize
+    samplingProbeIndices = getSampleIndices(total=nrow(data), intervalN=intervalN, verbose=verbose)
 
     mixResult = EM_vMix(y=my[samplingProbeIndices], X=mx[samplingProbeIndices,], nbins=nbins, convThreshold=convThreshold, verbose=verbose, demo=length(grep("Vignette_Example", basename(celFilePath))) > 0)
 
@@ -239,29 +244,20 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
     y_norm = round(y_norm, 8)
     gam = round(gam, 8)
 
-    xCoord = getX(affyExpressionFS, type="pm")[which(shouldUseProbes)]
-    yCoord = getY(affyExpressionFS, type="pm")[which(shouldUseProbes)]
+#    if (!is.na(probeLevelOutFilePath))
+#    {
+#      message("Outputting probe-level values to ", probeLevelOutFilePath)
+#      normOutput = cbind(data[,3], y_norm, gam, round(my, 8), round(m1, 8), round(m2, 8))
+#      write.table(normOutput, probeLevelOutFilePath, quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
+#    }
+#  }
 
-    xyCoord = paste(xCoord[shouldUseProbes], yCoord[shouldUseProbes], sep="_")
-
-    y_norm = y_norm[shouldUseProbes]
-    gam = gam[shouldUseProbes]
-    my = my[shouldUseProbes]
-    m1 = m1[shouldUseProbes]
-    m2 = m2[shouldUseProbes]
-
-    if (!is.na(probeLevelOutFilePath))
-    {
-      message("Outputting probe-level values to ", probeLevelOutFilePath)
-      normOutput = cbind(xyCoord, y_norm, gam, round(my, 8), round(m1, 8), round(m2, 8))
-      write.table(normOutput, probeLevelOutFilePath, quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
-    }
-  }
-
-  values = y_norm
   if (UPC)
-    values = gam
-  names(values) = xyCoord
+  {
+    data[,1] = gam
+  } else {
+    data[,1] = y_norm
+  }
 
   if (!any(is.na(probeSummaryPackage)) && probeSummaryPackage != "NA")
   {
@@ -272,25 +268,14 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
       probeSummaryPackage = eval(as.name(probeSummaryPackage))
     }
 
-    probeSummaryData = as.data.frame(probeSummaryPackage)
-    probeSummaryXyCoord = paste(probeSummaryData$x, probeSummaryData$y, sep="_")
-    probeSummaryValues = values[probeSummaryXyCoord]
+    probeSummaryData = as.data.frame(probeSummaryPackage, stringsAsFactors=FALSE)
+    probeSummaryData = cbind(probeSummaryData, paste(probeSummaryData$x, probeSummaryData$y, sep="_"))
 
-    return(as.matrix(tapply(probeSummaryValues, probeSummaryData$Probe.Set.Name, FUN=mean, trim=0.1, na.rm=TRUE)))
-  } else
-  {
-    xCoord = getX(affyExpressionFS, type="pm")[which(shouldUseProbes)]
-    yCoord = getY(affyExpressionFS, type="pm")[which(shouldUseProbes)]
-
-    if (is.na(exonArrayTarget))
-    {
-      probeSetNames = probeNames(affyExpressionFS)[shouldUseProbes]
-    } else {
-      probeSetNames = probeNames(affyExpressionFS, target=exonArrayTarget)[shouldUseProbes]
-    }
-
-    return(as.matrix(tapply(values, probeSetNames, FUN=mean, trim=0.1)))
+    data = as.matrix(merge(data, probeSummaryData, by.x=3, by.y=ncol(probeSummaryData), sort=FALSE)[,c(2,3,1,8)])
   }
+
+  # A trim value of 0.3 seems to work better than 0.1 for hugene arrays
+  return(as.matrix(tapply(as.numeric(data[,1]), data[,4], FUN=mean, trim=0.1)))
 }
 
 getSampleIndices = function(total, intervalN, verbose=TRUE)
@@ -320,11 +305,8 @@ assign_bin = function(y, nbins, verbose=TRUE)
   bins
 }
 
-buildDesignMatrix = function(pmSeqs, verbose=TRUE)
+buildDesignMatrix = function(seqs, verbose=TRUE)
 {
-  keepIndices = which(width(pmSeqs)==25)
-  seqs = as.character(pmSeqs[keepIndices])
-
   mx = sequenceDesignMatrix(seqs)
   numA = apply(mx[,1:25], 1, sum)
   numC = apply(mx[,26:50], 1, sum)
