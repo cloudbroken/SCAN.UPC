@@ -168,13 +168,17 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
 
     annotationPackageName = affyExpressionFS@annotation
     if (is.na(exonArrayTarget) && (grepl("hugene", annotationPackageName)))
-      exonArrayTarget = "probeset"
+      #exonArrayTarget = "probeset"
+      exonArrayTarget = "core"
 
-#    data = oligo::getProbeInfo(affyExpressionFS, field=c("fid", "x", "y", "man_fsetid", "seq"), probeType="pm", target=exonArrayTarget)
+    if (is.na(exonArrayTarget))
+    {
+      probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm")
+    } else {
+      probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm", target=exonArrayTarget)
+    }
 
-    xCoord = getX(affyExpressionFS, type="pm")
-    yCoord = getY(affyExpressionFS, type="pm")
-    xyCoord = paste(xCoord, yCoord, sep="_")
+    xyCoord = paste(probeInfo$x, probeInfo$y, sep="_")
 
     if (is.na(exonArrayTarget))
     {
