@@ -24,7 +24,7 @@ License: MIT
 Depends: R (>= 2.14.0), Biobase (>= 2.6.0), oligo, Biostrings,
         GEOquery, affy, affyio, foreach, sva
 Suggests: pd.hg.u95a
-Imports: utils, methods, MASS, tools
+Imports: utils, methods, MASS, tools, IRanges
 URL: http://bioconductor.org, http://jlab.bu.edu/software/scan-upc
 biocViews: Software, Microarray, Preprocessing, RNASeq, TwoChannel,
         OneChannel
