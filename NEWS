@@ -1,9 +1,13 @@
-CHANGES IN VERSION 2.5.8
+CHANGES IN VERSION 2.7.1
 -------------------------
 
 FIXES
-    o ParseMetaFromGtfFile tweaks (ambiguous function call, spaces in FASTA descriptors)
+    o ParseMetaFromGtfFile improvements (ambiguous function call, spaces in FASTA descriptors)
     o BrainArray summarization when probe maps to multiple genes/probesets
+
+NEW FEATURES
+
+    o This package provides support for the Affymetrix HTA 2.0 arrays
 
 CHANGES IN VERSION 2.5.8
 -------------------------

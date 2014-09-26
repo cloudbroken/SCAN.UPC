@@ -30,7 +30,7 @@ downloadFromGEO = function(inFilePattern)
     individualDir = file.path(tmpDir, inFilePattern, "Files", sep="")
     dir.create(individualDir, recursive=TRUE)
     untar(tarFilePath, exdir=individualDir)
-    inFilePattern = file.path(individualDir, "GSM*", sep="")
+    inFilePattern = file.path(individualDir, "GSM*CEL*", sep="")
   }
 
   if (substr(inFilePattern, 1, 3) == "GSM")

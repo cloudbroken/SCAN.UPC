@@ -81,7 +81,7 @@ processCelFiles = function(celFilePattern, outFilePath=NA, intervalN=50000, conv
     celFilePattern = downloadFromGEO(celFilePattern)
 
   fileNamePattern = sub("\\-", "\\\\-", glob2rx(basename(celFilePattern)))
-  fileNamePattern = sub("\\+", "\\\\+", basename(fileNamePattern))
+  fileNamePattern = sub("\\+", "\\\\+", fileNamePattern)
   celFilePaths = list.files(path=dirname(celFilePattern), pattern=fileNamePattern, full.names=TRUE)
 
   if (length(celFilePaths) == 0)
@@ -167,41 +167,16 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
     }
 
     annotationPackageName = affyExpressionFS@annotation
+
     if (is.na(exonArrayTarget) && (grepl("hugene", annotationPackageName)))
       #exonArrayTarget = "probeset"
       exonArrayTarget = "core"
 
-    if (is.na(exonArrayTarget))
+    if (grepl("^pd\\.hta\\.2\\.0", annotationPackageName))
     {
-      probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm")
+      data = getDataForHtaArray(celFilePath, affyExpressionFS, exonArrayTarget, verbose)
     } else {
-      probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm", target=exonArrayTarget)
-    }
-
-    xyCoord = paste(probeInfo$x, probeInfo$y, sep="_")
-
-    if (is.na(exonArrayTarget))
-    {
-      pint = oligo::pm(affyExpressionFS)
-    } else {
-      pint = oligo::pm(affyExpressionFS, target=exonArrayTarget)
-    }
-
-    if ((sum(pint==0) / length(pint)) > 0.01)
-    {
-      message(paste(celFilePath, " has a disproportionate number of zero values, so it cannot be processed.", sep=""))
-      return(NULL)
-    }
-
-    if (is.na(exonArrayTarget))
-    {
-      pmSeq = pmSequence(affyExpressionFS)
-      keepIndices = which(width(pmSeq) == 25)
-      data = cbind(pint[keepIndices], as.character(pmSeq)[keepIndices], xyCoord[keepIndices], probeNames(affyExpressionFS)[keepIndices])
-    } else {
-      pmSeq = pmSequence(affyExpressionFS, target=exonArrayTarget)
-      keepIndices = which(width(pmSeq) == 25)
-      data = cbind(pint[keepIndices], as.character(pmSeq)[keepIndices], xyCoord[keepIndices], probeNames(affyExpressionFS, target=exonArrayTarget)[keepIndices])
+      data = getDataForMostArrayTypes(celFilePath, affyExpressionFS, exonArrayTarget, verbose)
     }
 
     chunkSize = 100000
@@ -280,6 +255,84 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
 
   # A trim value of 0.3 seems to work better than 0.1 for HuGene 1.0 arrays (possibly others)
   return(as.matrix(tapply(as.numeric(data[,1]), data[,4], FUN=mean, trim=0.1)))
+}
+
+getDataForMostArrayTypes = function(celFilePath, affyExpressionFS, exonArrayTarget, verbose)
+{
+  if (is.na(exonArrayTarget))
+  {
+    probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm")
+  } else {
+    probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm", target=exonArrayTarget)
+  }
+
+  xyCoord = paste(probeInfo$x, probeInfo$y, sep="_")
+
+  if (is.na(exonArrayTarget))
+  {
+    pint = oligo::pm(affyExpressionFS)
+  } else {
+    pint = oligo::pm(affyExpressionFS, target=exonArrayTarget)
+  }
+
+  if ((sum(pint==0) / length(pint)) > 0.01)
+  {
+    message(paste(celFilePath, " has a disproportionate number of zero values, so it cannot be processed.", sep=""))
+    return(NULL)
+  }
+
+  if (is.na(exonArrayTarget))
+  {
+    pmSeq = pmSequence(affyExpressionFS)
+    keepIndices = which(width(pmSeq) == 25)
+    data = cbind(pint[keepIndices], as.character(pmSeq)[keepIndices], xyCoord[keepIndices], probeNames(affyExpressionFS)[keepIndices])
+  } else {
+    pmSeq = pmSequence(affyExpressionFS, target=exonArrayTarget)
+    keepIndices = which(width(pmSeq) == 25)
+    data = cbind(pint[keepIndices], as.character(pmSeq)[keepIndices], xyCoord[keepIndices], probeNames(affyExpressionFS, target=exonArrayTarget)[keepIndices])
+  }
+
+  return(data)
+}
+
+getDataForHtaArray = function(celFilePath, affyExpressionFS, exonArrayTarget, verbose)
+{
+  if (is.na(exonArrayTarget))
+    exonArrayTarget = "probeset"
+
+  if (exonArrayTarget != "probeset")
+    stop("Currently, 'probeset' is the only allowed setting for the exonArrayTarget parameter for the Affymetrix HTA 2.0 arrays.")
+
+  if (verbose)
+    message(paste("Retrieving probe information for ", celFilePath, sep=""))
+  probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm", target="probeset")
+
+  if (verbose)
+    message(paste("Retrieving intensity values for ", celFilePath, sep=""))
+  pint = oligo::pm(affyExpressionFS, target="probeset")
+
+  if ((sum(pint==0) / length(pint)) > 0.01)
+  {
+    message(paste(celFilePath, " has a disproportionate number of zero values, so it cannot be processed.", sep=""))
+    return(NULL)
+  }
+
+  if (verbose)
+    message(paste("Retrieving sequence information for ", celFilePath, sep=""))
+  pmSeq = pmSequence(affyExpressionFS)
+
+  if (verbose)
+    message(paste("Merging data for ", celFilePath, sep=""))
+  data = cbind(pint, as.character(pmSeq), paste(probeInfo$x, probeInfo$y, sep="_"), probeInfo$man_fsetid)
+
+  #if (verbose)
+  #  message(paste("Filtering data for ", celFilePath, sep=""))
+  #data = data[which(nchar(data[,2]) == 25),]
+
+  #pmIndices = pmindex(affyExpressionFS, target=exonArrayTarget)
+  #data = data[pmIndices, ]
+
+  return(data)
 }
 
 getSampleIndices = function(total, intervalN, verbose=TRUE)
