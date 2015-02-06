@@ -8,7 +8,8 @@
   When applying the \code{\link{UPC_RNASeq}} function, it is possible to correct for the length and GC content of genomic features. To accomplish this, an annotation file indicating these values for each feature must be provided. This helper function enables users to generate an annotation file, using a GTF file and genome FASTA file as references.
 }
 \usage{
-ParseMetaFromGtfFile(gtfFilePath, fastaFilePattern, outFilePath, featureTypes=c("protein_coding"), attributeType="gene_id")
+ParseMetaFromGtfFile(gtfFilePath, fastaFilePattern, outFilePath,
+                     featureTypes=c("protein_coding"), attributeType="gene_id")
 }
 \arguments{
   \item{gtfFilePath}{
@@ -50,7 +51,7 @@ ParseMetaFromGtfFile(gtfFilePath, fastaFilePattern, outFilePath, featureTypes=c(
 
 \examples{
 \dontrun{
-ParseMetaFromGtfFile("GRCh37_XY.gtf", "GRCh37.fa", "GRCh37_Annotation.txt", featureTypes=c("protein_coding"), attributeType="gene_id")
+ParseMetaFromGtfFile("GRCh37_XY.gtf", "GRCh37.fa", "GRCh37_Annotation.txt")
 }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

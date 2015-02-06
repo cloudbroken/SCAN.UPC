@@ -8,7 +8,8 @@
   This function can be used to derive UPC values for any type of gene-expression data. The key prerequisite is that the data be placed into an ExpressionSet object. And optionally, the user can specify the length and/or GC content (proportion of G or C bases) for the corresponding genomic region (e.g., gene). If these values are specified, the UPC algorithm will correct for biases resulting from length or GC content.
 }
 \usage{
-UPC_Generic_ExpressionSet(expressionSet, sequenceFeatureName = NA, modelType = "nn", convThreshold = 0.001, higherValuesIndicateHigherExpression = TRUE, verbose = TRUE)
+UPC_Generic_ExpressionSet(expressionSet, sequenceFeatureName = NA, modelType = "nn",
+  convThreshold = 0.001, higherValuesIndicateHigherExpression = TRUE, verbose = TRUE)
 }
 \arguments{
   \item{expressionSet}{

@@ -8,7 +8,8 @@
   This function is used to normalize two-channel expression microarrays (from Agilent) using the Universal exPression Codes (UPC) approach. In raw form, such microarray data come in the form of tab-separate data files.
 }
 \usage{
-UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn", convThreshold=0.01, batchFilePath = NA, verbose = TRUE)
+UPC_TwoColor(inFilePattern, outFilePath = NA, modelType="nn",
+  convThreshold=0.01, batchFilePath = NA, verbose = TRUE)
 }
 \arguments{
   \item{inFilePattern}{
