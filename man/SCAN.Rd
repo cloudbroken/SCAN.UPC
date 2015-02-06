@@ -11,14 +11,18 @@
   This function is used to normalize Affymetrix .CEL files via the SCAN and UPC methods.
 }
 \usage{
-SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, exonArrayTarget=NA, batchFilePath=NA, verbose = TRUE)
-SCANfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackageName = NA, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, exonArrayTarget=NA, batchFilePath=NA, verbose = TRUE)
-UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, exonArrayTarget = NA, modelType="nn", batchFilePath=NA, verbose = TRUE)
-UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackageName = NA, probeSummaryPackage = NA,
-     probeLevelOutDirPath = NA, exonArrayTarget = NA, modelType="nn", batchFilePath=NA, verbose = TRUE)
+SCAN(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA,
+     probeSummaryPackage = NA, probeLevelOutDirPath = NA, exonArrayTarget=NA,
+     batchFilePath=NA, verbose = TRUE)
+SCANfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackageName = NA,
+     probeSummaryPackage = NA, probeLevelOutDirPath = NA, exonArrayTarget=NA,
+     batchFilePath=NA, verbose = TRUE)
+UPC(celFilePattern, outFilePath = NA, convThreshold = 0.01, annotationPackageName = NA,
+     probeSummaryPackage = NA, probeLevelOutDirPath = NA, exonArrayTarget = NA,
+     modelType="nn", batchFilePath=NA, verbose = TRUE)
+UPCfast(celFilePattern, outFilePath = NA, convThreshold = 0.50, annotationPackageName = NA,
+     probeSummaryPackage = NA, probeLevelOutDirPath = NA, exonArrayTarget = NA,
+     modelType="nn", batchFilePath=NA, verbose = TRUE)
 }
 \arguments{
   \item{celFilePattern}{

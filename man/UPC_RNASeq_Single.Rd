@@ -8,7 +8,9 @@
 This function is used to derive UPC values for a single RNA-Seq sample. It requires an input vector that specifies a read count for each genomic region (e.g., gene). Optionally, this function can correct for the GC content and length of each genomic region.
 }
 \usage{
-UPC_RNASeq_Single(expressionValues, featureNames, lengths = NULL, gcContent = NULL, modelType = "nn", convThreshold = 0.01, ignoreZeroes = FALSE, verbose = TRUE)
+UPC_RNASeq_Single(expressionValues, featureNames, lengths = NULL,
+  gcContent = NULL, modelType = "nn", convThreshold = 0.01,
+  ignoreZeroes = FALSE, verbose = TRUE)
 }
 \arguments{
   \item{expressionValues}{
