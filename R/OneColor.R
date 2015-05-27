@@ -77,7 +77,8 @@ processCelFiles = function(celFilePattern, outFilePath=NA, intervalN=50000, conv
   if (convThreshold >= 1)
     stop("The convThreshold value must be lower than 1.0.")
 
-  if (shouldDownloadFromGEO(celFilePattern))
+  fromGEO = shouldDownloadFromGEO(celFilePattern)
+  if (fromGEO)
     celFilePattern = downloadFromGEO(celFilePattern)
 
   fileNamePattern = sub("\\-", "\\\\-", glob2rx(basename(celFilePattern)))
@@ -96,6 +97,9 @@ processCelFiles = function(celFilePattern, outFilePath=NA, intervalN=50000, conv
   celSummarizedList = foreach(celFilePath=celFilePaths) %dopar% {
     processCelFile(celFilePath=celFilePath, annotationPackageName=annotationPackageName, probeSummaryPackage=probeSummaryPackage, UPC=UPC, intervalN=intervalN, convThreshold=convThreshold, probeLevelOutDirPath=probeLevelOutDirPath, exonArrayTarget=exonArrayTarget, verbose=verbose)
   }
+
+  if (fromGEO)
+    unlink(celFilePaths)
 
   summarized = NULL
 
