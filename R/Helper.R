@@ -60,7 +60,9 @@ InstallBrainArrayPackage = function(celFilePath, version, organism, annotationSo
 
   packageFileName=paste(packageName, "_", version, ".tar.gz", sep="")
   tempPackageFilePath = paste(tmpDir, packageFileName, sep="")
-  packageUrl = paste("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/", version, "/", annotationSource, ".download/", packageFileName, sep="")
+  #packageUrl = paste("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/", version, "/", annotationSource, ".download/", packageFileName, sep="")
+  #http://mbni.org/customcdf/19.0.0/entrezg.download/hgu133ahsentrezgprobe_19.0.0.tar.gz
+  packageUrl = paste("http://mbni.org/customcdf/", version, "/", annotationSource, ".download/", packageFileName, sep="")
 
   download.file(packageUrl, tempPackageFilePath)
   install.packages(tempPackageFilePath, repos=NULL, type="source")
