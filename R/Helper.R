@@ -13,7 +13,7 @@ shouldDownloadFromGEO = function(inFilePattern)
   substr(inFilePattern, 1, 3) %in% c("GSE", "GSM") & length(grep("\\.", inFilePattern)) == 0 & length(grep("\\*", inFilePattern)) == 0
 }
 
-downloadFromGEO = function(inFilePattern)
+downloadFromGEO = function(inFilePattern, expectedFileSuffixPattern="*")
 {
   tmpDir=tempdir()
   message(paste("Downloading ", inFilePattern, " directly from GEO to ", tmpDir, ".", sep=""))
@@ -30,12 +30,12 @@ downloadFromGEO = function(inFilePattern)
     individualDir = file.path(tmpDir, inFilePattern, "Files", sep="")
     dir.create(individualDir, recursive=TRUE)
     untar(tarFilePath, exdir=individualDir)
-    inFilePattern = file.path(individualDir, "GSM*CEL*", sep="")
+    inFilePattern = file.path(individualDir, paste("GSM*", expectedFileSuffixPattern, sep=""), sep="")
   }
 
   if (substr(inFilePattern, 1, 3) == "GSM")
   {
-    downloadedFiles = list.files(path=tmpDir, full.names=TRUE)
+    downloadedFiles = list.files(path=tmpDir, full.names=TRUE, pattern=glob2rx(expectedFileSuffixPattern))
 
     if (length(downloadedFiles) == 0)
       stop(paste("No raw data files could be downloaded from GEO for ", inFilePattern, sep=""))
