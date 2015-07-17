@@ -13,10 +13,13 @@ shouldDownloadFromGEO = function(inFilePattern)
   substr(inFilePattern, 1, 3) %in% c("GSE", "GSM") & length(grep("\\.", inFilePattern)) == 0 & length(grep("\\*", inFilePattern)) == 0
 }
 
-downloadFromGEO = function(inFilePattern, expectedFileSuffixPattern="*")
+downloadFromGEO = function(inFilePattern, expectedFilePrefixPattern="*", expectedFileSuffixPattern="*")
 {
   tmpDir=tempdir()
   message(paste("Downloading ", inFilePattern, " directly from GEO to ", tmpDir, ".", sep=""))
+
+  downloadDir=paste(tmpDir, "/", inFilePattern, sep="")
+  unlink(downloadDir, recursive=TRUE)
 
   getGEOSuppFiles(inFilePattern, makeDirectory=FALSE, baseDir=tmpDir)
 
@@ -27,10 +30,9 @@ downloadFromGEO = function(inFilePattern, expectedFileSuffixPattern="*")
     if (!file.exists(tarFilePath))
       stop(paste("No raw data files could be downloaded from GEO for ", inFilePattern, sep=""))
 
-    individualDir = file.path(tmpDir, inFilePattern, "Files", sep="")
-    dir.create(individualDir, recursive=TRUE)
-    untar(tarFilePath, exdir=individualDir)
-    inFilePattern = file.path(individualDir, paste("GSM*", expectedFileSuffixPattern, sep=""), sep="")
+    dir.create(downloadDir, recursive=TRUE)
+    untar(tarFilePath, exdir=downloadDir)
+    inFilePattern = file.path(downloadDir, expectedFilePrefixPattern, sep="")
   }
 
   if (substr(inFilePattern, 1, 3) == "GSM")
@@ -44,6 +46,29 @@ downloadFromGEO = function(inFilePattern, expectedFileSuffixPattern="*")
   }
 
   inFilePattern
+}
+
+downloadBeadChipFromGEO = function(inFilePattern)
+{
+  tmpDir=tempdir()
+  downloadDir=paste(tmpDir, "/", inFilePattern, sep="")
+
+  message(paste("Downloading ", inFilePattern, " directly from GEO to ", downloadDir, ".", sep=""))
+
+  unlink(downloadDir, recursive=TRUE)
+  dir.create(downloadDir, recursive=TRUE)
+
+  getGEOSuppFiles(inFilePattern, makeDirectory=FALSE, baseDir=downloadDir)
+
+#  tarFilePath = file.path(tmpDir, paste(inFilePattern, "_RAW.tar", sep=""))
+
+#  if (file.exists(tarFilePath))
+#  {
+#    dir.create(downloadDir, recursive=TRUE)
+#    untar(tarFilePath, exdir=downloadDir)
+#  }
+#
+#  list.files(path=downloadDir, full.names=TRUE)
 }
 
 InstallBrainArrayPackage = function(celFilePath, version, organism, annotationSource)

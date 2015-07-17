@@ -44,7 +44,7 @@ processTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcCo
   if (fromGEO)
     inFilePattern = downloadFromGEO(inFilePattern)
 
-  inFilePaths = list.files(path=dirname(inFilePattern), pattern=glob2rx(basename(inFilePattern)), full.names=TRUE)
+  inFilePaths = list.files(path=dirname(inFilePattern), pattern=glob2rx(basename(inFilePattern)), full.names=TRUE, ignore.case=TRUE)
 
   if (length(inFilePaths) == 0)
     stop("No input files matched the pattern: ", inFilePattern)

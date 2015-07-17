@@ -79,11 +79,12 @@ processCelFiles = function(celFilePattern, outFilePath=NA, intervalN=50000, conv
 
   fromGEO = shouldDownloadFromGEO(celFilePattern)
   if (fromGEO)
-    celFilePattern = downloadFromGEO(celFilePattern, expectedFileSuffixPattern="*.CEL.gz")
+    celFilePattern = downloadFromGEO(celFilePattern, expectedFileSuffixPattern=c("*.CEL.gz", "*.cel.gz"))
 
   fileNamePattern = sub("\\-", "\\\\-", glob2rx(basename(celFilePattern)))
   fileNamePattern = sub("\\+", "\\\\+", fileNamePattern)
-  celFilePaths = list.files(path=dirname(celFilePattern), pattern=fileNamePattern, full.names=TRUE)
+  celFilePaths = list.files(path=dirname(celFilePattern), pattern=fileNamePattern, full.names=TRUE, ignore.case=TRUE)
+  celFilePaths = unique(celFilePaths)
 
   if (length(celFilePaths) == 0)
     stop("No CEL files that match the pattern ", celFilePattern, " could be located.")
