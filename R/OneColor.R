@@ -79,7 +79,7 @@ processCelFiles = function(celFilePattern, outFilePath=NA, intervalN=50000, conv
 
   fromGEO = shouldDownloadFromGEO(celFilePattern)
   if (fromGEO)
-    celFilePattern = downloadFromGEO(celFilePattern, expectedFileSuffixPattern=c("*.CEL.gz", "*.cel.gz"))
+    celFilePattern = downloadFromGEO(celFilePattern, expectedFileSuffixPattern="*.CEL.gz")
 
   fileNamePattern = sub("\\-", "\\\\-", glob2rx(basename(celFilePattern)))
   fileNamePattern = sub("\\+", "\\\\+", fileNamePattern)

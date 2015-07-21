@@ -37,7 +37,7 @@ downloadFromGEO = function(inFilePattern, expectedFilePrefixPattern="*", expecte
 
   if (substr(inFilePattern, 1, 3) == "GSM")
   {
-    downloadedFiles = list.files(path=tmpDir, full.names=TRUE, pattern=glob2rx(expectedFileSuffixPattern))
+    downloadedFiles = list.files(path=tmpDir, full.names=TRUE, pattern=glob2rx(expectedFileSuffixPattern), ignore.case=TRUE)
 
     if (length(downloadedFiles) == 0)
       stop(paste("No raw data files could be downloaded from GEO for ", inFilePattern, sep=""))
@@ -60,15 +60,15 @@ downloadBeadChipFromGEO = function(inFilePattern)
 
   getGEOSuppFiles(inFilePattern, makeDirectory=FALSE, baseDir=downloadDir)
 
-#  tarFilePath = file.path(tmpDir, paste(inFilePattern, "_RAW.tar", sep=""))
+  fileList = read.table(paste(downloadDir, "/filelist.txt", sep=""), sep="\t", stringsAsFactors=FALSE, header=TRUE, row.names=NULL, check.names=FALSE, comment.char="")
 
-#  if (file.exists(tarFilePath))
-#  {
-#    dir.create(downloadDir, recursive=TRUE)
-#    untar(tarFilePath, exdir=downloadDir)
-#  }
-#
-#  list.files(path=downloadDir, full.names=TRUE)
+  tarFilePath = paste(downloadDir, fileList[which(fileList$Type=="TAR"),]$Name, sep="/")
+  untar(tarFilePath, exdir=downloadDir)
+
+  bgxFilePath = paste(downloadDir, fileList[which(fileList$Type=="BGX"),]$Name, sep="/")
+  idatFilePaths = paste(downloadDir, fileList[which(fileList$Type=="IDAT"),]$Name, sep="/")
+
+  return(list(bgxFilePath=bgxFilePath, idatFilePaths=idatFilePaths))
 }
 
 InstallBrainArrayPackage = function(celFilePath, version, organism, annotationSource)
