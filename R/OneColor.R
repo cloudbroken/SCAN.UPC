@@ -184,6 +184,9 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
       data = getDataForMostArrayTypes(celFilePath, affyExpressionFS, exonArrayTarget, verbose)
     }
 
+    if (is.null(data))
+      return(NULL)
+
     chunkSize = 100000
     chunkStartIndex = 1
     chunkEndIndex = chunkStartIndex + chunkSize - 1
@@ -204,7 +207,12 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
       mxStartIndex = mxStartIndex + nrow(mxChunk)
     }
 
-    my = log2(as.numeric(data[,1]))
+    rawIntensities = as.numeric(data[,1])
+
+    if (min(rawIntensities) == 0)
+      rawIntensities = rawIntensities + 1
+
+    my = log2(rawIntensities)
     nGroups = nrow(data) / binsize
     samplingProbeIndices = getSampleIndices(total=nrow(data), intervalN=intervalN, verbose=verbose)
 
@@ -349,7 +357,7 @@ getSampleIndices = function(total, intervalN, verbose=TRUE)
   seq(1, total, interval)
 }
 
-assign_bin = function(y, nbins, verbose=TRUE)
+assign_bin = function(y, nbins, verbose=TRUE, randomSeed=1)
 {
   quans = sort(y)[floor(length(y) * 1:nbins / nbins)]
   bins = sapply(y, function(x) { sum(x>quans) }) + 1
@@ -359,9 +367,10 @@ assign_bin = function(y, nbins, verbose=TRUE)
     if (verbose)
       message("The values were not separated into enough bins, so a tiny amount of noise will be added to make this possible.")
 
-    set.seed(1)
+    set.seed(randomSeed)
     noise = rnorm(length(y)) / 10000000
-    bins = assign_bin(y + noise, nbins, verbose)
+    y = y + noise
+    bins = assign_bin(y, nbins, verbose, randomSeed+1)
   }
 
   bins
@@ -385,14 +394,13 @@ EM_vMix = function(y, X, nbins, convThreshold=.01, verbose=TRUE, maxIt=100, demo
     message("Starting EM")
 
   quan = sort(y)[floor(0.5 * length(y)) - 1]
-  #gam <<- cbind(as.integer(y <= quan), as.integer(y > quan))
   gam = cbind(as.integer(y <= quan), as.integer(y > quan))
 
   p = apply(gam, 2, mean)
 
   b1 = mybeta(y=y, X=X, gam=gam[,1], verbose=verbose)
   b2 = mybeta(y=y, X=X, gam=gam[,2], verbose=verbose)
-  bin = assign_bin(y=y, nbins=nbins, verbose=verbose)
+  bin = assign_bin(y=y, nbins=nbins, verbose=verbose&TRUE)
   s1 = vsig(y=y, X=X, b=b1, gam=gam[,1], bin=bin, nbins=nbins, verbose=verbose)
   s2 = vsig(y=y, X=X, b=b2, gam=gam[,1], bin=bin, nbins=nbins, verbose=verbose)
 
@@ -409,7 +417,7 @@ EM_vMix = function(y, X, nbins, convThreshold=.01, verbose=TRUE, maxIt=100, demo
     #M-Step
     p = apply(gam, 2, mean)
     b1 = vbeta(y=y, X=X, bin=bin, gam=gam[,1], s2=s1, prof=TRUE, verbose=verbose)
-    bin = assign_bin(y=(X %*% b1), nbins=nbins, verbose=verbose)
+    bin = assign_bin(y=(X %*% b1), nbins=nbins, verbose=FALSE)
     b2 = vbeta(y=y, X=X, bin=bin, gam=gam[,2], s2=s2, prof=FALSE, verbose=verbose)
     s1 = vsig(y=y, X=X, b=b1, gam=gam[,1], bin=bin, nbins=nbins, verbose=verbose)
     s2 = vsig(y=y, X=X, b=b2, gam=gam[,2], bin=bin, nbins=nbins, verbose=verbose)
