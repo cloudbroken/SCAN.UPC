@@ -40,10 +40,11 @@ UPC_TwoColor = function(inFilePattern, outFilePath=NA, modelType="nn", convThres
 
 processTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcConv=0.01, verbose=TRUE)
 {
-  if (shouldDownloadFromGEO(inFilePattern))
+  fromGEO = shouldDownloadFromGEO(inFilePattern)
+  if (fromGEO)
     inFilePattern = downloadFromGEO(inFilePattern)
 
-  inFilePaths = list.files(path=dirname(inFilePattern), pattern=glob2rx(basename(inFilePattern)), full.names=TRUE)
+  inFilePaths = list.files(path=dirname(inFilePattern), pattern=glob2rx(basename(inFilePattern)), full.names=TRUE, ignore.case=TRUE)
 
   if (length(inFilePaths) == 0)
     stop("No input files matched the pattern: ", inFilePattern)
@@ -88,7 +89,6 @@ processTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcCo
       }
     }
   }
-
 
   # Account for duplicate feature names so we can put it in an ExpressionSet object
   featuresTable = table(outData[,1])
@@ -136,6 +136,9 @@ processTwoColor = function(inFilePattern, outFilePath=NA, upcModelType=NA, upcCo
   expressionSet = ExpressionSet(exprData)
   sampleNames(expressionSet) = sampleNames
   featureNames(expressionSet) = featureNames
+
+  if (fromGEO)
+    unlink(inFilePaths)
 
   return(expressionSet)
 }

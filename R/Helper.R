@@ -13,10 +13,13 @@ shouldDownloadFromGEO = function(inFilePattern)
   substr(inFilePattern, 1, 3) %in% c("GSE", "GSM") & length(grep("\\.", inFilePattern)) == 0 & length(grep("\\*", inFilePattern)) == 0
 }
 
-downloadFromGEO = function(inFilePattern)
+downloadFromGEO = function(inFilePattern, expectedFilePrefixPattern="*", expectedFileSuffixPattern="*")
 {
   tmpDir=tempdir()
   message(paste("Downloading ", inFilePattern, " directly from GEO to ", tmpDir, ".", sep=""))
+
+  downloadDir=paste(tmpDir, "/", inFilePattern, sep="")
+  unlink(downloadDir, recursive=TRUE)
 
   getGEOSuppFiles(inFilePattern, makeDirectory=FALSE, baseDir=tmpDir)
 
@@ -27,15 +30,14 @@ downloadFromGEO = function(inFilePattern)
     if (!file.exists(tarFilePath))
       stop(paste("No raw data files could be downloaded from GEO for ", inFilePattern, sep=""))
 
-    individualDir = file.path(tmpDir, inFilePattern, "Files", sep="")
-    dir.create(individualDir, recursive=TRUE)
-    untar(tarFilePath, exdir=individualDir)
-    inFilePattern = file.path(individualDir, "GSM*CEL*", sep="")
+    dir.create(downloadDir, recursive=TRUE)
+    untar(tarFilePath, exdir=downloadDir)
+    inFilePattern = file.path(downloadDir, expectedFilePrefixPattern, sep="")
   }
 
   if (substr(inFilePattern, 1, 3) == "GSM")
   {
-    downloadedFiles = list.files(path=tmpDir, full.names=TRUE)
+    downloadedFiles = list.files(path=tmpDir, full.names=TRUE, pattern=glob2rx(expectedFileSuffixPattern), ignore.case=TRUE)
 
     if (length(downloadedFiles) == 0)
       stop(paste("No raw data files could be downloaded from GEO for ", inFilePattern, sep=""))
@@ -44,6 +46,46 @@ downloadFromGEO = function(inFilePattern)
   }
 
   inFilePattern
+}
+
+downloadBeadChipFromGEO = function(inFilePattern)
+{
+  tmpDir=tempdir()
+  downloadDir=paste(tmpDir, "/", inFilePattern, sep="")
+
+  message(paste("Downloading ", inFilePattern, " directly from GEO to ", downloadDir, ".", sep=""))
+
+  unlink(downloadDir, recursive=TRUE)
+  dir.create(downloadDir, recursive=TRUE)
+
+  fileDataFrame = getGEOSuppFiles(inFilePattern, makeDirectory=FALSE, baseDir=downloadDir)
+
+  probeDataFilePath = rownames(fileDataFrame)[grepl("_non-normalized\\.txt\\.gz$", rownames(fileDataFrame))]
+  tarFilePath = rownames(fileDataFrame)[grepl("_RAW\\.tar$", rownames(fileDataFrame))]
+
+  if (length(tarFilePath) > 0)
+  {
+    untar(tarFilePath, exdir=downloadDir)
+    tarFileListFilePath = rownames(fileDataFrame)[grepl("filelist\\.txt$", rownames(fileDataFrame))]
+    tarFileList = read.table(tarFileListFilePath, sep="\t", stringsAsFactors=FALSE, header=TRUE, row.names=NULL, check.names=FALSE, comment.char="")
+
+  #wgdaslFilePath = rownames(fileDataFrame)[grepl("WGDASL\\.txt\\.gz$", rownames(fileDataFrame))]
+#print(wgdaslFilePath)
+#  bgxFilePath = paste(downloadDir, fileList[which(fileList$Type=="BGX"),]$Name, sep="/")
+#  idatFilePaths = paste(downloadDir, fileList[which(fileList$Type=="IDAT"),]$Name, sep="/")
+  }
+
+##########
+# See what tarFileList has when it is a WGDASL file rather than a BGX
+##########
+print(fileDataFrame)
+print(tarFileList)
+print(probeDataFilePath)
+print(tarFilePath)
+
+stop()
+
+#  return(list(bgxFilePath=bgxFilePath, idatFilePaths=idatFilePaths))
 }
 
 InstallBrainArrayPackage = function(celFilePath, version, organism, annotationSource)
@@ -60,12 +102,14 @@ InstallBrainArrayPackage = function(celFilePath, version, organism, annotationSo
 
   packageFileName=paste(packageName, "_", version, ".tar.gz", sep="")
   tempPackageFilePath = paste(tmpDir, packageFileName, sep="")
-  packageUrl = paste("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/", version, "/", annotationSource, ".download/", packageFileName, sep="")
+  #packageUrl = paste("http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/", version, "/", annotationSource, ".download/", packageFileName, sep="")
+  #http://mbni.org/customcdf/19.0.0/entrezg.download/hgu133ahsentrezgprobe_19.0.0.tar.gz
+  packageUrl = paste("http://mbni.org/customcdf/", version, "/", annotationSource, ".download/", packageFileName, sep="")
 
   download.file(packageUrl, tempPackageFilePath)
   install.packages(tempPackageFilePath, repos=NULL, type="source")
 
-  return(packageFileName)
+  return(packageName)
 }
 
 ParseMetaFromGtfFile = function(gtfFilePath, fastaFilePattern, outFilePath, featureTypes=c("protein_coding"), attributeType="gene_id")
