@@ -58,17 +58,34 @@ downloadBeadChipFromGEO = function(inFilePattern)
   unlink(downloadDir, recursive=TRUE)
   dir.create(downloadDir, recursive=TRUE)
 
-  getGEOSuppFiles(inFilePattern, makeDirectory=FALSE, baseDir=downloadDir)
+  fileDataFrame = getGEOSuppFiles(inFilePattern, makeDirectory=FALSE, baseDir=downloadDir)
 
-  fileList = read.table(paste(downloadDir, "/filelist.txt", sep=""), sep="\t", stringsAsFactors=FALSE, header=TRUE, row.names=NULL, check.names=FALSE, comment.char="")
+  probeDataFilePath = rownames(fileDataFrame)[grepl("_non-normalized\\.txt\\.gz$", rownames(fileDataFrame))]
+  tarFilePath = rownames(fileDataFrame)[grepl("_RAW\\.tar$", rownames(fileDataFrame))]
 
-  tarFilePath = paste(downloadDir, fileList[which(fileList$Type=="TAR"),]$Name, sep="/")
-  untar(tarFilePath, exdir=downloadDir)
+  if (length(tarFilePath) > 0)
+  {
+    untar(tarFilePath, exdir=downloadDir)
+    tarFileListFilePath = rownames(fileDataFrame)[grepl("filelist\\.txt$", rownames(fileDataFrame))]
+    tarFileList = read.table(tarFileListFilePath, sep="\t", stringsAsFactors=FALSE, header=TRUE, row.names=NULL, check.names=FALSE, comment.char="")
 
-  bgxFilePath = paste(downloadDir, fileList[which(fileList$Type=="BGX"),]$Name, sep="/")
-  idatFilePaths = paste(downloadDir, fileList[which(fileList$Type=="IDAT"),]$Name, sep="/")
+  #wgdaslFilePath = rownames(fileDataFrame)[grepl("WGDASL\\.txt\\.gz$", rownames(fileDataFrame))]
+#print(wgdaslFilePath)
+#  bgxFilePath = paste(downloadDir, fileList[which(fileList$Type=="BGX"),]$Name, sep="/")
+#  idatFilePaths = paste(downloadDir, fileList[which(fileList$Type=="IDAT"),]$Name, sep="/")
+  }
 
-  return(list(bgxFilePath=bgxFilePath, idatFilePaths=idatFilePaths))
+##########
+# See what tarFileList has when it is a WGDASL file rather than a BGX
+##########
+print(fileDataFrame)
+print(tarFileList)
+print(probeDataFilePath)
+print(tarFilePath)
+
+stop()
+
+#  return(list(bgxFilePath=bgxFilePath, idatFilePaths=idatFilePaths))
 }
 
 InstallBrainArrayPackage = function(celFilePath, version, organism, annotationSource)
@@ -92,7 +109,7 @@ InstallBrainArrayPackage = function(celFilePath, version, organism, annotationSo
   download.file(packageUrl, tempPackageFilePath)
   install.packages(tempPackageFilePath, repos=NULL, type="source")
 
-  return(packageFileName)
+  return(packageName)
 }
 
 ParseMetaFromGtfFile = function(gtfFilePath, fastaFilePattern, outFilePath, featureTypes=c("protein_coding"), attributeType="gene_id")
