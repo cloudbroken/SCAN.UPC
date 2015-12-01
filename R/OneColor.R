@@ -152,18 +152,18 @@ createOutputDir = function(dirPath, verbose=TRUE)
 
 processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackage, UPC, probeLevelOutDirPath, exonArrayTarget, intervalN, nbins=25, binsize=5000, convThreshold=0.01, verbose=TRUE)
 {
-#  probeLevelOutFilePath = NA
-#  if (!is.na(probeLevelOutDirPath))
-#    probeLevelOutFilePath = paste(probeLevelOutDirPath, "/", basename(celFilePath), ".txt", sep="")
+  probeLevelOutFilePath = NA
+  if (!is.na(probeLevelOutDirPath))
+    probeLevelOutFilePath = paste(probeLevelOutDirPath, "/", basename(celFilePath), ".txt", sep="")
 
-#  if (!is.na(probeLevelOutFilePath) && file.exists(probeLevelOutFilePath))
-#  {
-#    data = read.table(probeLevelOutFilePath, sep="\t", stringsAsFactors=FALSE, header=FALSE, row.names=NULL)
-#    xyCoord = as.character(data[,1])
-#    y_norm = as.numeric(data[,2])
-#    gam = as.numeric(data[,3])
-#  } else
-#  {
+  if (!is.na(probeLevelOutFilePath) && file.exists(probeLevelOutFilePath))
+  {
+    data = read.table(probeLevelOutFilePath, sep="\t", stringsAsFactors=FALSE, header=FALSE, row.names=NULL)
+    xyCoord = as.character(data[,1])
+    y_norm = as.numeric(data[,2])
+    gam = as.numeric(data[,3])
+  } else
+  {
     if (is.na(annotationPackageName))
     {
       affyExpressionFS <- read.celfiles(celFilePath)
@@ -236,13 +236,13 @@ processCelFile = function(celFilePath, annotationPackageName, probeSummaryPackag
     y_norm = round(y_norm, 8)
     gam = round(gam, 8)
 
-#    if (!is.na(probeLevelOutFilePath))
-#    {
-#      message("Outputting probe-level values to ", probeLevelOutFilePath)
-#      normOutput = cbind(data[,3], y_norm, gam, round(my, 8), round(m1, 8), round(m2, 8))
-#      write.table(normOutput, probeLevelOutFilePath, quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
-#    }
-#  }
+    if (!is.na(probeLevelOutFilePath))
+    {
+      message("Outputting probe-level values to ", probeLevelOutFilePath)
+      normOutput = cbind(data[,3], y_norm, gam, round(my, 8), round(m1, 8), round(m2, 8))
+      write.table(normOutput, probeLevelOutFilePath, quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
+    }
+  }
 
   if (UPC)
   {
