@@ -274,7 +274,7 @@ getDataForMostArrayTypes = function(celFilePath, affyExpressionFS, exonArrayTarg
 {
   if (is.na(exonArrayTarget))
   {
-    probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm")
+    probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm", target = "mps1")
   } else {
     probeInfo = oligo::getProbeInfo(affyExpressionFS, field=c("x", "y"), probeType="pm", target=exonArrayTarget)
   }
